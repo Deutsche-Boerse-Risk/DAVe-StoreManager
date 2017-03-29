@@ -1,0 +1,4 @@
+[
+{"snapshotID":21,"businessDate":20091215,"timestamp":1488376838036,"clearer":"SCHDW","member":"ORDDJ","maintainer":"DBKFR","limitType":"TMR","utilization":2.2235764537337498E10,"warningLevel":0.0,"throttleLevel":1.0E7,"rejectLevel":0.0},
+{"snapshotID":21,"businessDate":20091215,"timestamp":1488376838036,"clearer":"JVGIC","member":"AFTNB","maintainer":"FULCC","limitType":"CULI","utilization":1.109382109046E9,"throttleLevel":0.0,"rejectLevel":2.0E7}
+]
