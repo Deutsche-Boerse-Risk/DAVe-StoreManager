@@ -20,6 +20,7 @@ public class MainVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
     private static final String MONGO_CONF_KEY = "mongo";
     private static final String HTTP_CONF_KEY = "http";
+    private static final int HTTP_VERTICLE_INSTANCES = 5;
     private JsonObject configuration;
     private Map<String, String> verticleDeployments = new HashMap<>();
 
@@ -79,16 +80,16 @@ public class MainVerticle extends AbstractVerticle {
 
     private Future<Void> deployPersistenceVerticle() {
         return this.deployVerticle(PersistenceVerticle.class, this.configuration.getJsonObject(MONGO_CONF_KEY,
-                new JsonObject()).put("guice_binder", this.configuration.getString("guice_binder", PersistenceVerticleBinder.class.getName())));
+                new JsonObject()).put("guice_binder", this.configuration.getString("guice_binder", PersistenceVerticleBinder.class.getName())), 1);
     }
 
     private Future<Void> deployHttpVerticle() {
-        return this.deployVerticle(HttpVerticle.class, this.configuration.getJsonObject(HTTP_CONF_KEY, new JsonObject()));
+        return this.deployVerticle(HttpVerticle.class, this.configuration.getJsonObject(HTTP_CONF_KEY, new JsonObject()), HTTP_VERTICLE_INSTANCES);
     }
 
-    private Future<Void> deployVerticle(Class clazz, JsonObject config) {
+    private Future<Void> deployVerticle(Class clazz, JsonObject config, int instances) {
         Future<Void> verticleFuture = Future.future();
-        DeploymentOptions options = new DeploymentOptions().setConfig(config);
+        DeploymentOptions options = new DeploymentOptions().setConfig(config).setInstances(instances);
         String deploymentName = String.format("%s%s", config.containsKey("guice_binder") ? "java-guice:" : "", clazz.getName());
         vertx.deployVerticle(deploymentName, options, ar -> {
             if (ar.succeeded()) {
@@ -96,7 +97,9 @@ public class MainVerticle extends AbstractVerticle {
                 verticleDeployments.put(clazz.getSimpleName(), ar.result());
                 verticleFuture.complete();
             } else {
-                verticleFuture.fail(ar.cause());
+                if (!verticleFuture.failed()) {
+                    verticleFuture.fail(ar.cause());
+                }
             }
         });
         return verticleFuture;

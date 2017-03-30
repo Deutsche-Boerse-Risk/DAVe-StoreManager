@@ -28,7 +28,10 @@ public class HttpVerticle extends AbstractVerticle
 {
     private static final Logger LOG = LoggerFactory.getLogger(HttpVerticle.class);
 
+    private static final Integer DEFAULT_PORT = 8080;
+
     private static final String API_VERSION = "v1.0";
+
     public static final String STORE_ACCOUNT_MARGIN_API = String.format("/api/%s/store/am", API_VERSION);
     public static final String STORE_LIQUI_GROUP_MARGIN_API = String.format("/api/%s/store/lgm", API_VERSION);
     public static final String STORE_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("/api/%s/store/lgsm", API_VERSION);
@@ -38,8 +41,6 @@ public class HttpVerticle extends AbstractVerticle
 
     public static final String REST_HEALTHZ = "/healthz";
     public static final String REST_READINESS = "/readiness";
-
-    private static final Integer DEFAULT_PORT = 8080;
 
     private HttpServer server;
     private HealthCheck healthCheck;

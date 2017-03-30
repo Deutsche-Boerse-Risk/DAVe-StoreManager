@@ -4,7 +4,7 @@ import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import com.deutscheboerse.risk.dave.utils.RestSender;
-import com.deutscheboerse.risk.dave.utils.RestSenderCorrectData;
+import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -56,7 +56,7 @@ public class MainVerticleIT extends BaseTest {
         });
         mainVerticleAsync.awaitSuccess(30000);
         MongoClient mongoClient = this.createMongoClient(options.getConfig().getJsonObject("mongo"));
-        final RestSender restSender = new RestSenderCorrectData(this.vertx);
+        final RestSender restSender = new RestSenderRegular(this.vertx);
         restSender.sendAllData(context.asyncAssertSuccess());
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(AccountMarginModel.class), ACCOUNT_MARGIN_COUNT);
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), LIQUI_GROUP_MARGIN_COUNT);

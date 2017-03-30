@@ -6,7 +6,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
@@ -60,7 +59,7 @@ public class StoreApi {
                 routingContext.response()
                         .setStatusCode(HttpResponseStatus.CREATED.code())
                         .putHeader("content-type", "application/json; charset=utf-8")
-                        .end(new JsonObject().put("status", "ok").encode());
+                        .end();
             } else {
                 LOG.error("Failed to store the document", ar.cause());
                 routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
