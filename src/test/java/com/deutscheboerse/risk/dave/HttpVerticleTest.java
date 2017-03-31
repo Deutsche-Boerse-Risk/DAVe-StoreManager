@@ -123,11 +123,8 @@ public class HttpVerticleTest {
 
         DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(BaseTest.getHttpConfig());
         vertx.deployVerticle(HttpVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess());
-
         sender.accept(context.asyncAssertSuccess());
-
         async.awaitSuccess(30000);
-
         ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 
@@ -140,15 +137,7 @@ public class HttpVerticleTest {
         testAppender.start();
         DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(BaseTest.getHttpConfig());
         vertx.deployVerticle(HttpVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess());
-        Async async = context.async();
-        sender.accept(ar -> {
-            if (ar.succeeded()) {
-                async.complete();
-            } else {
-                context.fail(ar.cause());
-            }
-        });
-        async.awaitSuccess();
+        sender.accept(context.asyncAssertSuccess());
         testAppender.waitForMessageCount(Level.ERROR, msgCount);
         ILoggingEvent logMessage = testAppender.getLastMessage(Level.ERROR);
         testAppender.stop();

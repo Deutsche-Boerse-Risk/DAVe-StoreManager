@@ -94,12 +94,12 @@ public class MongoPersistenceServiceIT extends BaseTest {
                 }
             });
 
-        indexCheck.accept(MongoPersistenceService.getCollectionName(AccountMarginModel.class), MongoPersistenceService.getUniqueIndex(new AccountMarginModel()));
-        indexCheck.accept(MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), MongoPersistenceService.getUniqueIndex(new LiquiGroupMarginModel()));
-        indexCheck.accept(MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), MongoPersistenceService.getUniqueIndex(new LiquiGroupSplitMarginModel()));
-        indexCheck.accept(MongoPersistenceService.getCollectionName(PoolMarginModel.class), MongoPersistenceService.getUniqueIndex(new PoolMarginModel()));
-        indexCheck.accept(MongoPersistenceService.getCollectionName(PositionReportModel.class), MongoPersistenceService.getUniqueIndex(new PositionReportModel()));
-        indexCheck.accept(MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), MongoPersistenceService.getUniqueIndex(new RiskLimitUtilizationModel()));
+        indexCheck.accept(MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION, MongoPersistenceService.getUniqueIndex(new AccountMarginModel()));
+        indexCheck.accept(MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION, MongoPersistenceService.getUniqueIndex(new LiquiGroupMarginModel()));
+        indexCheck.accept(MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, MongoPersistenceService.getUniqueIndex(new LiquiGroupSplitMarginModel()));
+        indexCheck.accept(MongoPersistenceService.POOL_MARGIN_COLLECTION, MongoPersistenceService.getUniqueIndex(new PoolMarginModel()));
+        indexCheck.accept(MongoPersistenceService.POSITION_REPORT_COLLECTION, MongoPersistenceService.getUniqueIndex(new PositionReportModel()));
+        indexCheck.accept(MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION, MongoPersistenceService.getUniqueIndex(new RiskLimitUtilizationModel()));
     }
 
     @Test
@@ -187,8 +187,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(AccountMarginModel.class), firstMsgCount);
+        this.checkCountInCollection(context, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION, firstMsgCount);
         this.checkAccountMarginCollectionQuery(context);
+
+        AccountMarginModel firstModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
+        AccountMarginModel secondModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryAccountMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryAccountMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     @Test
@@ -221,8 +232,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), firstMsgCount);
+        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION, firstMsgCount);
         this.checkLiquiGroupMarginCollectionQuery(context);
+
+        LiquiGroupMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupMarginModel.class, 1);
+        LiquiGroupMarginModel secondModel = DataHelper.getLastModelFromFile(LiquiGroupMarginModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryLiquiGroupMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryLiquiGroupMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     @Test
@@ -255,8 +277,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), firstMsgCount);
+        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, firstMsgCount);
         this.checkLiquiGroupSplitMarginCollectionQuery(context);
+
+        LiquiGroupSplitMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupSplitMarginModel.class, 1);
+        LiquiGroupSplitMarginModel secondModel = DataHelper.getLastModelFromFile(LiquiGroupSplitMarginModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryLiquiGroupSplitMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryLiquiGroupSplitMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     @Test
@@ -288,8 +321,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
             });
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(PoolMarginModel.class), firstMsgCount);
+        this.checkCountInCollection(context, MongoPersistenceService.POOL_MARGIN_COLLECTION, firstMsgCount);
         this.checkPoolMarginCollectionQuery(context);
+
+        PoolMarginModel firstModel = DataHelper.getLastModelFromFile(PoolMarginModel.class, 1);
+        PoolMarginModel secondModel = DataHelper.getLastModelFromFile(PoolMarginModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryPoolMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryPoolMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     @Test
@@ -320,8 +364,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
             });
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(PositionReportModel.class), firstMsgCount );
+        this.checkCountInCollection(context, MongoPersistenceService.POSITION_REPORT_COLLECTION, firstMsgCount );
         this.checkPositionReportCollectionQuery(context);
+
+        PositionReportModel firstModel = DataHelper.getLastModelFromFile(PositionReportModel.class, 1);
+        PositionReportModel secondModel = DataHelper.getLastModelFromFile(PositionReportModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryPositionReport(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryPositionReport(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     @Test
@@ -352,8 +407,19 @@ public class MongoPersistenceServiceIT extends BaseTest {
             });
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), firstMsgCount);
+        this.checkCountInCollection(context, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION, firstMsgCount);
         this.checkRiskLimitUtilizationCollectionQuery(context);
+
+        RiskLimitUtilizationModel firstModel = DataHelper.getLastModelFromFile(RiskLimitUtilizationModel.class, 1);
+        RiskLimitUtilizationModel secondModel = DataHelper.getLastModelFromFile(RiskLimitUtilizationModel.class, 2);
+
+        // Check data
+        persistenceProxy.queryRiskLimitUtilization(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
+        persistenceProxy.queryRiskLimitUtilization(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
+        ));
     }
 
     private void testErrorInInitialize(TestContext context, String functionToFail, String expectedErrorMessage) throws InterruptedException {
@@ -390,7 +456,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 2).orElse(new JsonObject());
         AccountMarginModel firstModel = new AccountMarginModel(firstJsonData);
         AccountMarginModel secondModel = new AccountMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(AccountMarginModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION);
     }
 
     private void checkLiquiGroupMarginCollectionQuery(TestContext context) {
@@ -398,7 +464,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2).orElse(new JsonObject());
         LiquiGroupMarginModel firstModel = new LiquiGroupMarginModel(firstJsonData);
         LiquiGroupMarginModel secondModel = new LiquiGroupMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION);
     }
 
     private void checkLiquiGroupSplitMarginCollectionQuery(TestContext context) {
@@ -406,7 +472,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2).orElse(new JsonObject());
         LiquiGroupSplitMarginModel firstModel = new LiquiGroupSplitMarginModel(firstJsonData);
         LiquiGroupSplitMarginModel secondModel = new LiquiGroupSplitMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION);
     }
 
     private void checkPoolMarginCollectionQuery(TestContext context) {
@@ -414,7 +480,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.POOL_MARGIN_FOLDER, 2).orElse(new JsonObject());
         PoolMarginModel firstModel = new PoolMarginModel(firstJsonData);
         PoolMarginModel secondModel = new PoolMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(PoolMarginModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.POOL_MARGIN_COLLECTION);
     }
 
     private void checkPositionReportCollectionQuery(TestContext context) {
@@ -422,7 +488,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.POSITION_REPORT_FOLDER, 2).orElse(new JsonObject());
         PositionReportModel firstModel = new PositionReportModel(firstJsonData);
         PositionReportModel secondModel = new PositionReportModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(PositionReportModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.POSITION_REPORT_COLLECTION);
     }
 
     private void checkRiskLimitUtilizationCollectionQuery(TestContext context) {
@@ -430,7 +496,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
         JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2).orElse(new JsonObject());
         RiskLimitUtilizationModel firstModel = new RiskLimitUtilizationModel(firstJsonData);
         RiskLimitUtilizationModel secondModel = new RiskLimitUtilizationModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class));
+        checkCollection(context, firstModel, secondModel, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION);
     }
 
     private void checkCollection(TestContext context, AbstractModel firstSnapshotModel, AbstractModel secondSnapshotModel, String collectionName) {
@@ -480,5 +546,4 @@ public class MongoPersistenceServiceIT extends BaseTest {
         MongoPersistenceServiceIT.persistenceProxy.close();
         MongoPersistenceServiceIT.vertx.close(context.asyncAssertSuccess());
     }
-
 }

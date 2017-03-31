@@ -4,6 +4,8 @@ import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
 import io.vertx.core.*;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -15,15 +17,24 @@ import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
 
     private static final int RECONNECT_DELAY = 2000;
+    public static final String ACCOUNT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(AccountMarginModel.class);
+    public static final String LIQUI_GROUP_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class);
+    public static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class);
+    public static final String POOL_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(PoolMarginModel.class);
+    public static final String POSITION_REPORT_COLLECTION = MongoPersistenceService.getCollectionName(PositionReportModel.class);
+    public static final String RISK_LIMIT_UTILIZATION_COLLECTION = MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class);
 
     private final Vertx vertx;
     private final MongoClient mongo;
     private final HealthCheck healthCheck;
+    private boolean closed;
+    private final ConnectionManager connectionManager = new ConnectionManager();
 
     @Inject
     public MongoPersistenceService(Vertx vertx, MongoClient mongo) {
@@ -40,8 +51,10 @@ public class MongoPersistenceService implements PersistenceService {
                     if (ar.succeeded()) {
                         healthCheck.setComponentReady(Component.PERSISTENCE_SERVICE);
                     } else {
-                        // Try to re-initialize in a few seconds
-                        vertx.setTimer(RECONNECT_DELAY, i -> initialize(res -> {/*empty handler*/}));
+                        if (!closed) {
+                            // Try to re-initialize in a few seconds
+                            vertx.setTimer(RECONNECT_DELAY, i -> initialize(res -> {/*empty handler*/}));
+                        }
                         LOG.error("Initialize failed, trying again...");
                     }
                     // Inform the caller that we succeeded even if the connection to mongo database
@@ -52,36 +65,134 @@ public class MongoPersistenceService implements PersistenceService {
 
     @Override
     public void storeAccountMargin(AccountMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(AccountMarginModel.class), resultHandler);
+        this.store(model, ACCOUNT_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
     public void storeLiquiGroupMargin(LiquiGroupMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), resultHandler);
+        this.store(model, LIQUI_GROUP_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
     public void storeLiquiGroupSplitMargin(LiquiGroupSplitMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), resultHandler);
+        this.store(model, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
     public void storePoolMargin(PoolMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(PoolMarginModel.class), resultHandler);
+        this.store(model, POOL_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
     public void storePositionReport(PositionReportModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(PositionReportModel.class), resultHandler);
+        this.store(model, POSITION_REPORT_COLLECTION, resultHandler);
     }
 
     @Override
     public void storeRiskLimitUtilization(RiskLimitUtilizationModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), resultHandler);
+        this.store(model, RISK_LIMIT_UTILIZATION_COLLECTION, resultHandler);
+    }
+
+    @Override
+    public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, ACCOUNT_MARGIN_COLLECTION, query, new AccountMarginModel(), resultHandler);
+    }
+
+    @Override
+    public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, LIQUI_GROUP_MARGIN_COLLECTION, query, new LiquiGroupMarginModel(), resultHandler);
+    }
+
+    @Override
+    public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, new LiquiGroupSplitMarginModel(), resultHandler);
+    }
+
+    @Override
+    public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, POOL_MARGIN_COLLECTION, query, new PoolMarginModel(), resultHandler);
+    }
+
+    @Override
+    public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, POSITION_REPORT_COLLECTION, query, new PositionReportModel(), resultHandler);
+    }
+
+    @Override
+    public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+        this.find(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, new RiskLimitUtilizationModel(), resultHandler);
+    }
+
+    private void find(RequestType type, String collection, JsonObject query, AbstractModel model, Handler<AsyncResult<String>> resultHandler) {
+        LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
+        BiFunction<JsonObject, AbstractModel, JsonArray> getPipeline;
+        switch(type) {
+            case LATEST:
+                getPipeline = MongoPersistenceService::getLatestPipeline;
+                break;
+            case HISTORY:
+                getPipeline = MongoPersistenceService::getHistoryPipeline;
+                break;
+            default:
+                LOG.error("Unknown request type {}", type);
+                resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unknown request type"));
+                return;
+        }
+        mongo.runCommand("aggregate", MongoPersistenceService.getCommand(collection, query, model, getPipeline), res -> {
+            if (res.succeeded()) {
+                resultHandler.handle(Future.succeededFuture(Json.encodePrettily(res.result().getJsonArray("result"))));
+            } else {
+                LOG.error("{} query failed", collection, res.cause());
+                connectionManager.startReconnection();
+                resultHandler.handle(ServiceException.fail(QUERY_ERROR, res.cause().getMessage()));
+            }
+        });
+
+    }
+
+    private static JsonObject getCommand(String collection, JsonObject params, AbstractModel model, BiFunction<JsonObject, AbstractModel, JsonArray> getPipeline) {
+        return new JsonObject()
+                .put("aggregate", collection)
+                .put("pipeline", getPipeline.apply(params, model))
+                .put("allowDiskUse", true);
+    }
+
+    private static JsonArray getLatestPipeline(JsonObject params, AbstractModel model) {
+        JsonArray pipeline = new JsonArray();
+        pipeline.add(new JsonObject().put("$match", params));
+        pipeline.add(new JsonObject().put("$project", getLatestSnapshotProject(model)));
+        pipeline.add(new JsonObject().put("$unwind", "$snapshots"));
+        pipeline.add(new JsonObject().put("$project", getFlattenProject(model)));
+        return pipeline;
+    }
+
+    private static JsonArray getHistoryPipeline(JsonObject params, AbstractModel model) {
+        JsonArray pipeline = new JsonArray();
+        pipeline.add(new JsonObject().put("$match", params));
+        pipeline.add(new JsonObject().put("$unwind", "$snapshots"));
+        pipeline.add(new JsonObject().put("$project", getFlattenProject(model)));
+        return pipeline;
+    }
+
+    private static JsonObject getLatestSnapshotProject(AbstractModel model) {
+        JsonObject project = new JsonObject();
+        model.getKeys().forEach(key -> project.put(key, 1));
+        project.put("snapshots", new JsonObject().put("$slice", new JsonArray().add("$snapshots").add(-1)));
+        return project;
+    }
+
+    private static JsonObject getFlattenProject(AbstractModel model) {
+        JsonObject project = new JsonObject();
+        project.put("_id", 0);
+        model.getKeys().forEach(key -> project.put(key, 1));
+        model.getNonKeys().forEach(nonKey -> project.put(nonKey, "$snapshots." + nonKey));
+        model.getHeader().forEach(header -> project.put(header, "$snapshots." + header));
+        return project;
     }
 
     @Override
     public void close() {
+        this.closed = true;
         this.mongo.close();
     }
 
@@ -90,29 +201,8 @@ public class MongoPersistenceService implements PersistenceService {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
             } else {
-                if (healthCheck.isComponentReady(Component.PERSISTENCE_SERVICE)) {
-                    // Inform other components that we have failed
-                    healthCheck.setComponentFailed(Component.PERSISTENCE_SERVICE);
-                    // Re-check the connection
-                    scheduleConnectionStatus();
-                }
+                connectionManager.startReconnection();
                 resultHandler.handle(ServiceException.fail(STORE_ERROR, ar.cause().getMessage()));
-            }
-        });
-    }
-
-    private void scheduleConnectionStatus() {
-        vertx.setTimer(RECONNECT_DELAY, id -> checkConnectionStatus());
-    }
-
-    private void checkConnectionStatus() {
-        this.mongo.runCommand("dbstats", new JsonObject().put("dbstats", 1), res -> {
-            if (res.succeeded()) {
-                LOG.info("Back online");
-                healthCheck.setComponentReady(Component.PERSISTENCE_SERVICE);
-            } else {
-                LOG.error("Still disconnected");
-                scheduleConnectionStatus();
             }
         });
     }
@@ -129,7 +219,7 @@ public class MongoPersistenceService implements PersistenceService {
         return uniqueIndex;
     }
 
-    private static JsonObject getStoreDocument(AbstractModel model) {
+    public static JsonObject getStoreDocument(AbstractModel model) {
         JsonObject document = new JsonObject();
         JsonObject setDocument = new JsonObject();
         JsonObject pushDocument = new JsonObject();
@@ -233,5 +323,35 @@ public class MongoPersistenceService implements PersistenceService {
             }
         });
         return createIndexesFuture;
+    }
+
+    private class ConnectionManager {
+
+        void startReconnection() {
+            if (healthCheck.isComponentReady(HealthCheck.Component.PERSISTENCE_SERVICE)) {
+                // Inform other components that we have failed
+                healthCheck.setComponentFailed(HealthCheck.Component.PERSISTENCE_SERVICE);
+                // Re-check the connection
+                scheduleConnectionStatus();
+            }
+        }
+
+        private void scheduleConnectionStatus() {
+            if (!closed) {
+                vertx.setTimer(RECONNECT_DELAY, id -> checkConnectionStatus());
+            }
+        }
+
+        private void checkConnectionStatus() {
+            mongo.runCommand("ping", new JsonObject().put("ping", 1), res -> {
+                if (res.succeeded()) {
+                    LOG.info("Back online");
+                    healthCheck.setComponentReady(HealthCheck.Component.PERSISTENCE_SERVICE);
+                } else {
+                    LOG.error("Still disconnected");
+                    scheduleConnectionStatus();
+                }
+            });
+        }
     }
 }
