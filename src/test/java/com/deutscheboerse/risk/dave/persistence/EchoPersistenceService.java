@@ -78,7 +78,6 @@ public class EchoPersistenceService implements PersistenceService {
 
     @Override
     public void close() {
-
     }
 
     private String echoResponse(String model, String requestType, JsonObject query) {

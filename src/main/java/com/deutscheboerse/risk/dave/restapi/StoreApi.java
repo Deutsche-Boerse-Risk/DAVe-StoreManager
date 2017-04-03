@@ -1,5 +1,6 @@
 package com.deutscheboerse.risk.dave.restapi;
 
+import com.deutscheboerse.risk.dave.HttpVerticle;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -19,37 +20,55 @@ public class StoreApi {
 
     public StoreApi(Vertx vertx) {
         this.vertx = vertx;
-        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);;
+        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);
     }
 
-    public void storeAccountMarginHandler(RoutingContext routingContext) {
-        AccountMarginModel model = new AccountMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storeAccountMargin(model, this.getResponseHandler(routingContext));
+    public void storeHandler(RoutingContext routingContext) {
+        try {
+            this.doStore(routingContext);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Bad request: {}", e.getMessage(), e);
+            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
+        }
     }
 
-    public void storeLiquiGroupMarginHandler(RoutingContext routingContext) {
-        LiquiGroupMarginModel model = new LiquiGroupMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storeLiquiGroupMargin(model, this.getResponseHandler(routingContext));
-    }
-
-    public void storeLiquiGroupSplitMarginHandler(RoutingContext routingContext) {
-        LiquiGroupSplitMarginModel model = new LiquiGroupSplitMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storeLiquiGroupSplitMargin(model, this.getResponseHandler(routingContext));
-    }
-
-    public void storePoolMarginHandler(RoutingContext routingContext) {
-        PoolMarginModel model = new PoolMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storePoolMargin(model, this.getResponseHandler(routingContext));
-    }
-
-    public void storePositionReportHandler(RoutingContext routingContext) {
-        PositionReportModel model = new PositionReportModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storePositionReport(model, this.getResponseHandler(routingContext));
-    }
-
-    public void storeRiskLimitUtilizationHandler(RoutingContext routingContext) {
-        RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.storeRiskLimitUtilization(model, this.getResponseHandler(routingContext));
+    public void doStore(RoutingContext routingContext) {
+        switch(routingContext.request().getParam("model")) {
+            case HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
+                AccountMarginModel accountMarginModel = new AccountMarginModel(routingContext.getBodyAsJson());
+                accountMarginModel.validate();
+                this.persistenceProxy.storeAccountMargin(accountMarginModel, this.getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
+                LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(routingContext.getBodyAsJson());
+                liquiGroupMarginModel.validate();
+                this.persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, this.getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
+                LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(routingContext.getBodyAsJson());
+                liquiGroupSplitMarginModel.validate();
+                this.persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, this.getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER:
+                PoolMarginModel poolMarginModel = new PoolMarginModel(routingContext.getBodyAsJson());
+                poolMarginModel.validate();
+                this.persistenceProxy.storePoolMargin(poolMarginModel, this.getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER:
+                PositionReportModel positionReportModel = new PositionReportModel(routingContext.getBodyAsJson());
+                positionReportModel.validate();
+                this.persistenceProxy.storePositionReport(positionReportModel, this.getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
+                RiskLimitUtilizationModel riskLimitUtilizationModel = new RiskLimitUtilizationModel(routingContext.getBodyAsJson());
+                riskLimitUtilizationModel.validate();
+                this.persistenceProxy.storeRiskLimitUtilization(riskLimitUtilizationModel, this.getResponseHandler(routingContext));
+                break;
+            default:
+                LOG.error("Unrecognized model type");
+                routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).end();
+                break;
+        }
     }
 
     private Handler<AsyncResult<Void>> getResponseHandler(RoutingContext routingContext) {

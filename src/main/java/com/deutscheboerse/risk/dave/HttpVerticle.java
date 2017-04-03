@@ -31,21 +31,14 @@ public class HttpVerticle extends AbstractVerticle
     private static final Integer DEFAULT_PORT = 8080;
 
     private static final String API_VERSION = "v1.0";
-    private static final String API_PREFIX = String.format("/api/%s", API_VERSION);
+    public static final String API_PREFIX = String.format("/api/%s", API_VERSION);
 
-    public static final String STORE_ACCOUNT_MARGIN_API = String.format("%s/store/am", API_PREFIX);
-    public static final String STORE_LIQUI_GROUP_MARGIN_API = String.format("%s/store/lgm", API_PREFIX);
-    public static final String STORE_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/store/lgsm", API_PREFIX);
-    public static final String STORE_POOL_MARGIN_API = String.format("%s/store/pm", API_PREFIX);
-    public static final String STORE_POSITION_REPORT_API = String.format("%s/store/pr", API_PREFIX);
-    public static final String STORE_RISK_LIMIT_UTILIZATION_API = String.format("%s/store/rlu", API_PREFIX);
-
-    public static final String QUERY_ACCOUNT_MARGIN_API = String.format("%s/query/am", API_PREFIX);
-    public static final String QUERY_LIQUI_GROUP_MARGIN_API = String.format("%s/query/lgm", API_PREFIX);
-    public static final String QUERY_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/query/lgsm", API_PREFIX);
-    public static final String QUERY_POOL_MARGIN_API = String.format("%s/query/pm", API_PREFIX);
-    public static final String QUERY_POSITION_REPORT_API = String.format("%s/query/pr", API_PREFIX);
-    public static final String QUERY_RISK_LIMIT_UTILIZATION_API = String.format("%s/query/rlu", API_PREFIX);
+    public static final String ACCOUNT_MARGIN_REQUEST_PARAMETER = "am";
+    public static final String LIQUI_GROUP_MARGIN_REQUEST_PARAMETER = "lgm";
+    public static final String LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER = "lgsm";
+    public static final String POOL_MARGIN_REQUEST_PARAMETER = "pm";
+    public static final String POSITION_REPORT_REQUEST_PARAMETER = "pr";
+    public static final String RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER = "rlu";
 
     public static final String REST_HEALTHZ = "/healthz";
     public static final String REST_READINESS = "/readiness";
@@ -103,28 +96,12 @@ public class HttpVerticle extends AbstractVerticle
         
         // Store API
         StoreApi storeApi = new StoreApi(vertx);
-        router.post(STORE_ACCOUNT_MARGIN_API).handler(storeApi::storeAccountMarginHandler);
-        router.post(STORE_LIQUI_GROUP_MARGIN_API).handler(storeApi::storeLiquiGroupMarginHandler);
-        router.post(STORE_LIQUI_GROUP_SPLIT_MARGIN_API).handler(storeApi::storeLiquiGroupSplitMarginHandler);
-        router.post(STORE_POOL_MARGIN_API).handler(storeApi::storePoolMarginHandler);
-        router.post(STORE_POSITION_REPORT_API).handler(storeApi::storePositionReportHandler);
-        router.post(STORE_RISK_LIMIT_UTILIZATION_API).handler(storeApi::storeRiskLimitUtilizationHandler);
+        router.post(String.format("%s/store/:model", API_PREFIX)).handler(storeApi::storeHandler);
 
         // Query API
         QueryApi queryApi = new QueryApi(vertx);
-        router.get(String.format("%s/latest", QUERY_ACCOUNT_MARGIN_API)).handler(queryApi::queryLatestAccountMarginHandler);
-        router.get(String.format("%s/latest", QUERY_LIQUI_GROUP_MARGIN_API)).handler(queryApi::queryLatestLiquiGroupMarginHandler);
-        router.get(String.format("%s/latest", QUERY_LIQUI_GROUP_SPLIT_MARGIN_API)).handler(queryApi::queryLatestLiquiGroupSplitMarginHandler);
-        router.get(String.format("%s/latest", QUERY_POOL_MARGIN_API)).handler(queryApi::queryLatestPoolMarginHandler);
-        router.get(String.format("%s/latest", QUERY_POSITION_REPORT_API)).handler(queryApi::queryLatestPositionReportHandler);
-        router.get(String.format("%s/latest", QUERY_RISK_LIMIT_UTILIZATION_API)).handler(queryApi::queryLatestRiskLimitUtilizationHandler);
-
-        router.get(String.format("%s/history", QUERY_ACCOUNT_MARGIN_API)).handler(queryApi::queryHistoryAccountMarginHandler);
-        router.get(String.format("%s/history", QUERY_LIQUI_GROUP_MARGIN_API)).handler(queryApi::queryHistoryLiquiGroupMarginHandler);
-        router.get(String.format("%s/history", QUERY_LIQUI_GROUP_SPLIT_MARGIN_API)).handler(queryApi::queryHistoryLiquiGroupSplitMarginHandler);
-        router.get(String.format("%s/history", QUERY_POOL_MARGIN_API)).handler(queryApi::queryHistoryPoolMarginHandler);
-        router.get(String.format("%s/history", QUERY_POSITION_REPORT_API)).handler(queryApi::queryHistoryPositionReportHandler);
-        router.get(String.format("%s/history", QUERY_RISK_LIMIT_UTILIZATION_API)).handler(queryApi::queryHistoryRiskLimitUtilizationHandler);
+        router.get(String.format("%s/query/:model/latest", API_PREFIX)).handler(queryApi::queryLatestHandler);
+        router.get(String.format("%s/query/:model/history", API_PREFIX)).handler(queryApi::queryHistoryHandler);
 
         return router;
     }

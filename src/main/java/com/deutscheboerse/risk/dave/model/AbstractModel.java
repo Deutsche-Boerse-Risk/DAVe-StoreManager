@@ -2,10 +2,9 @@ package com.deutscheboerse.risk.dave.model;
 
 import io.vertx.core.json.JsonObject;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractModel extends JsonObject {
 
@@ -26,6 +25,33 @@ public abstract class AbstractModel extends JsonObject {
 
     public JsonObject toJson() {
         return new JsonObject(this.getMap());
+    }
+
+    public void validate() {
+        validateMissingFields();
+        validateUnknownFields();
+    }
+
+    protected void validateMissingFields() {
+        List<String> missingFields = Stream.of(getHeader(), getKeys(), getNonKeys())
+                .flatMap(Collection::stream)
+                .filter(field -> !containsKey(field))
+                .collect(Collectors.toList());
+        if (!missingFields.isEmpty()) {
+            throw new IllegalArgumentException("Missing fields in model: " + missingFields.toString());
+        }
+    }
+
+    private void validateUnknownFields() {
+        List<String> unknownFields = fieldNames()
+                .stream()
+                .filter(field -> !getHeader().contains(field))
+                .filter(field -> !getKeys().contains(field))
+                .filter(field -> !getNonKeys().contains(field))
+                .collect(Collectors.toList());
+        if (!unknownFields.isEmpty()) {
+            throw new IllegalArgumentException("Unknown field in model: " + unknownFields.toString());
+        }
     }
 
     public abstract Map<String, Class> getKeysDescriptor();

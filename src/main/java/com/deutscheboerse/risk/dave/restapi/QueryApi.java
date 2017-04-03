@@ -1,8 +1,10 @@
 package com.deutscheboerse.risk.dave.restapi;
 
+import com.deutscheboerse.risk.dave.HttpVerticle;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import com.deutscheboerse.risk.dave.persistence.RequestType;
+import com.google.common.base.Preconditions;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -27,87 +29,91 @@ public class QueryApi {
         this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);
     }
 
-    public void queryLatestAccountMarginHandler(RoutingContext routingContext) {
-        AccountMarginModel model = new AccountMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryAccountMargin(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
+    public void queryLatestHandler(RoutingContext routingContext) {
+        this.doQuery(routingContext, RequestType.LATEST);
     }
 
-    public void queryHistoryAccountMarginHandler(RoutingContext routingContext) {
-        AccountMarginModel model = new AccountMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryAccountMargin(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
+    public void queryHistoryHandler(RoutingContext routingContext) {
+        this.doQuery(routingContext, RequestType.HISTORY);
     }
 
-    public void queryLatestLiquiGroupMarginHandler(RoutingContext routingContext) {
-        LiquiGroupMarginModel model = new LiquiGroupMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryLiquiGroupMargin(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
+    private void doQuery(RoutingContext routingContext, RequestType requestType) {
+        try {
+            this.queryHandler(routingContext, requestType);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Bad request: {}", e.getMessage(), e);
+            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
+        }
     }
 
-    public void queryHistoryLiquiGroupMarginHandler(RoutingContext routingContext) {
-        LiquiGroupMarginModel model = new LiquiGroupMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryLiquiGroupMargin(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
+    private void queryHandler(RoutingContext routingContext, RequestType requestType) {
+        switch(routingContext.request().getParam("model")) {
+            case HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
+                AccountMarginModel accountMarginModel = new AccountMarginModel();
+                this.persistenceProxy.queryAccountMargin(requestType, this.createParamsFromContext(routingContext, accountMarginModel), getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
+                LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel();
+                this.persistenceProxy.queryLiquiGroupMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupMarginModel), getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
+                LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel();
+                this.persistenceProxy.queryLiquiGroupSplitMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupSplitMarginModel), getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER:
+                PoolMarginModel poolMarginModel = new PoolMarginModel();
+                this.persistenceProxy.queryPoolMargin(requestType, this.createParamsFromContext(routingContext, poolMarginModel), getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER:
+                PositionReportModel positionReportModel = new PositionReportModel();
+                this.persistenceProxy.queryPositionReport(requestType, this.createParamsFromContext(routingContext, positionReportModel), getResponseHandler(routingContext));
+                break;
+            case HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
+                RiskLimitUtilizationModel riskLimitUtilizationModel = new RiskLimitUtilizationModel();
+                this.persistenceProxy.queryRiskLimitUtilization(requestType, this.createParamsFromContext(routingContext, riskLimitUtilizationModel), getResponseHandler(routingContext));
+                break;
+            default:
+                LOG.error("Unrecognized model type");
+                routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).end();
+                break;
+        }
 
-    public void queryLatestLiquiGroupSplitMarginHandler(RoutingContext routingContext) {
-        LiquiGroupSplitMarginModel model = new LiquiGroupSplitMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryLiquiGroupSplitMargin(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryHistoryLiquiGroupSplitMarginHandler(RoutingContext routingContext) {
-        LiquiGroupSplitMarginModel model = new LiquiGroupSplitMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryLiquiGroupSplitMargin(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryLatestPoolMarginHandler(RoutingContext routingContext) {
-        PoolMarginModel model = new PoolMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryPoolMargin(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryHistoryPoolMarginHandler(RoutingContext routingContext) {
-        PoolMarginModel model = new PoolMarginModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryPoolMargin(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryLatestPositionReportHandler(RoutingContext routingContext) {
-        PositionReportModel model = new PositionReportModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryPositionReport(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryHistoryPositionReportHandler(RoutingContext routingContext) {
-        PositionReportModel model = new PositionReportModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryPositionReport(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryLatestRiskLimitUtilizationHandler(RoutingContext routingContext) {
-        RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryRiskLimitUtilization(RequestType.LATEST, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
-    }
-
-    public void queryHistoryRiskLimitUtilizationHandler(RoutingContext routingContext) {
-        RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(routingContext.getBodyAsJson());
-        this.persistenceProxy.queryRiskLimitUtilization(RequestType.HISTORY, this.createParamsFromContext(routingContext, model), getResponseHandler(routingContext));
     }
 
     private JsonObject createParamsFromContext(RoutingContext routingContext, AbstractModel model) {
         final JsonObject result = new JsonObject();
         routingContext.request().params().entries()
+                .stream()
+                .filter(entry -> !"model".equals(entry.getKey()))
                 .forEach(entry -> {
+                    final String parameterName = entry.getKey();
+                    final String parameterValue = entry.getValue();
                     try {
-                        String parameterValue = URLDecoder.decode(entry.getValue(), "UTF-8");
-                        Class<?> convertTo = model.getKeysDescriptor().get(entry.getKey());
-                        result.put(entry.getKey(), convertValue(parameterValue, convertTo));
+                        String decodedValue = URLDecoder.decode(parameterValue, "UTF-8");
+                        Class<?> parameterType = getParameterType(parameterName, model);
+                        result.put(parameterName, convertValue(decodedValue, parameterType));
                     } catch (UnsupportedEncodingException e) {
                         throw new AssertionError(e);
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException(String.format("Cannot convert '%s' (%s) to %s",
+                                parameterName, parameterValue, getParameterType(parameterName, model).getSimpleName()));
                     }
                 });
         return result;
     }
 
+    private Class<?> getParameterType(String parameterName, AbstractModel model) {
+        Preconditions.checkArgument(model.getKeysDescriptor().containsKey(parameterName),
+                "Unknown parameter '%s'", parameterName);
+        return model.getKeysDescriptor().get(parameterName);
+    }
+
     private <T> T convertValue(String value, Class<T> clazz) {
-        if (clazz == String.class) {
+        if (clazz.equals(String.class)) {
             return clazz.cast(value);
-        } else if (clazz == Integer.class) {
+        } else if (clazz.equals(Integer.class)) {
             return clazz.cast(Integer.parseInt(value));
-        } else if (clazz == Double.class) {
+        } else if (clazz.equals(Double.class)) {
             return clazz.cast(Double.parseDouble(value));
         } else {
             throw new AssertionError("Unsupported type " + clazz);
@@ -119,11 +125,12 @@ public class QueryApi {
             if (ar.succeeded()) {
                 LOG.trace("Received response for query request");
                 routingContext.response()
+                        .setStatusCode(HttpResponseStatus.OK.code())
                         .putHeader("content-type", "application/json; charset=utf-8")
                         .end(ar.result());
             } else {
                 LOG.error("Failed to query the DB service", ar.cause());
-                routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+                routingContext.response().setStatusCode(HttpResponseStatus.SERVICE_UNAVAILABLE.code()).end();
             }
         };
     }

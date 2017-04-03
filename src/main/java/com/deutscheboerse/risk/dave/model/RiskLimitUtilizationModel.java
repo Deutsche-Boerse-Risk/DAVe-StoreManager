@@ -3,9 +3,9 @@ package com.deutscheboerse.risk.dave.model;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @DataObject
 public class RiskLimitUtilizationModel extends AbstractModel {
@@ -36,5 +36,23 @@ public class RiskLimitUtilizationModel extends AbstractModel {
         keys.put("throttleLevel", Double.class);
         keys.put("rejectLevel", Double.class);
         return Collections.unmodifiableMap(keys);
+    }
+
+    @Override
+    protected void validateMissingFields() {
+        List<String> missingFields = Stream.of(getHeader(), getKeys(), getNonKeys())
+                .flatMap(Collection::stream)
+                .filter(field -> !"warningLevel".equals(field))
+                .filter(field -> !"throttleLevel".equals(field))
+                .filter(field -> !"rejectLevel".equals(field))
+                .filter(field -> !containsKey(field))
+                .collect(Collectors.toList());
+        if (!missingFields.isEmpty()) {
+            throw new IllegalArgumentException("Missing fields in model: " + missingFields.toString());
+        }
+        if ((!containsKey("warningLevel")) && (!containsKey("throttleLevel")) && (!containsKey("rejectLevel"))) {
+            System.out.println(fieldNames());
+            throw new IllegalArgumentException("Missing one of the 'levels' field in model");
+        }
     }
 }
