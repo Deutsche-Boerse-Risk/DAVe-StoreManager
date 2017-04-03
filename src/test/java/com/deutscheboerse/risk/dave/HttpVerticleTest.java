@@ -35,12 +35,12 @@ import java.util.function.Consumer;
 
 @RunWith(VertxUnitRunner.class)
 public class HttpVerticleTest extends BaseTest {
-    public static final String QUERY_ACCOUNT_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER);
-    public static final String QUERY_LIQUI_GROUP_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER);
-    public static final String QUERY_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER);
-    public static final String QUERY_POOL_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER);
-    public static final String QUERY_POSITION_REPORT_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER);
-    public static final String QUERY_RISK_LIMIT_UTILIZATION_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER);
+    private static final String QUERY_ACCOUNT_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER);
+    private static final String QUERY_LIQUI_GROUP_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER);
+    private static final String QUERY_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER);
+    private static final String QUERY_POOL_MARGIN_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER);
+    private static final String QUERY_POSITION_REPORT_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER);
+    private static final String QUERY_RISK_LIMIT_UTILIZATION_API = String.format("%s/query/%s", HttpVerticle.API_PREFIX, HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER);
 
     private final TestAppender testAppender = TestAppender.getAppender(StoreApi.class);
     private final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);

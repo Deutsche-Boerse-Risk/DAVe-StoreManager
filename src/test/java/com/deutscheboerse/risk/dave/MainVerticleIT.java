@@ -2,13 +2,11 @@ package com.deutscheboerse.risk.dave;
 
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
-import com.deutscheboerse.risk.dave.persistence.RequestType;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import com.deutscheboerse.risk.dave.utils.RestSender;
 import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.unit.Async;
@@ -58,7 +56,7 @@ public class MainVerticleIT extends BaseTest {
         });
         mainVerticleAsync.awaitSuccess(30000);
         this.testStoreCommands(context);
-        this.testQueryCommands(context);
+//        this.testQueryCommands(context);
     }
 
     private void testStoreCommands(TestContext context) {
@@ -74,7 +72,7 @@ public class MainVerticleIT extends BaseTest {
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), RISK_LIMIT_UTILIZATION_COUNT);
     }
 
-    private void testQueryCommands(TestContext context) {
+//    private void testQueryCommands(TestContext context) {
 //        AccountMarginModel firstModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
 //        AccountMarginModel secondModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 2);
 //
@@ -86,8 +84,8 @@ public class MainVerticleIT extends BaseTest {
 //        persistenceProxy.queryAccountMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
 //                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
 //        ));
-
-    }
+//
+//    }
 
     @Test
     public void testFailedDeploymentWrongConfig(TestContext context) {

@@ -14,16 +14,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 
 import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.HTTP;
 
-/**
- * Starts an {@link HttpServer} on default port 8080.
- * <p>
- * It exports these two web services:
- * <ul>
- *   <li>/healthz   - Always replies "ok" (provided the web server is running)
- *   <li>/readiness - Replies "ok" or "nok" indicating whether all verticles
- *                    are up and running
- * </ul>
- */
 public class HttpVerticle extends AbstractVerticle
 {
     private static final Logger LOG = LoggerFactory.getLogger(HttpVerticle.class);

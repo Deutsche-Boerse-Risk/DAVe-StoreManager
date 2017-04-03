@@ -23,12 +23,12 @@ public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
 
     private static final int RECONNECT_DELAY = 2000;
-    public static final String ACCOUNT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(AccountMarginModel.class);
-    public static final String LIQUI_GROUP_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class);
-    public static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class);
-    public static final String POOL_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(PoolMarginModel.class);
-    public static final String POSITION_REPORT_COLLECTION = MongoPersistenceService.getCollectionName(PositionReportModel.class);
-    public static final String RISK_LIMIT_UTILIZATION_COLLECTION = MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class);
+    static final String ACCOUNT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(AccountMarginModel.class);
+    static final String LIQUI_GROUP_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class);
+    static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class);
+    static final String POOL_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(PoolMarginModel.class);
+    static final String POSITION_REPORT_COLLECTION = MongoPersistenceService.getCollectionName(PositionReportModel.class);
+    static final String RISK_LIMIT_UTILIZATION_COLLECTION = MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class);
 
     private final Vertx vertx;
     private final MongoClient mongo;
@@ -219,7 +219,7 @@ public class MongoPersistenceService implements PersistenceService {
         return uniqueIndex;
     }
 
-    public static JsonObject getStoreDocument(AbstractModel model) {
+    private static JsonObject getStoreDocument(AbstractModel model) {
         JsonObject document = new JsonObject();
         JsonObject setDocument = new JsonObject();
         JsonObject pushDocument = new JsonObject();

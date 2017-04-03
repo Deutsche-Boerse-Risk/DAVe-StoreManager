@@ -64,7 +64,7 @@ public class DataAnonymizer {
     private void write(String path, JsonArray jsonArray) {
         String output = jsonArray.stream()
                 .map(o -> (JsonObject) o)
-                .map(json -> json.encode())
+                .map(JsonObject::encode)
                 .collect(Collectors.joining(",\n", "[\n", "\n]"));
         try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
             writer.println(output);

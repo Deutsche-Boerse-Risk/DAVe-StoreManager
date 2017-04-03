@@ -15,7 +15,7 @@ public abstract class AbstractModel extends JsonObject {
         this.mergeIn(json);
     }
 
-    public Map<String, Class> getHeaderDescriptor() {
+    private Map<String, Class> getHeaderDescriptor() {
         Map<String, Class<?>> header = new LinkedHashMap<>();
         header.put("snapshotID", Integer.class);
         header.put("businessDate", Integer.class);

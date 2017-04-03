@@ -32,7 +32,7 @@ public class StoreApi {
         }
     }
 
-    public void doStore(RoutingContext routingContext) {
+    private void doStore(RoutingContext routingContext) {
         switch(routingContext.request().getParam("model")) {
             case HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
                 AccountMarginModel accountMarginModel = new AccountMarginModel(routingContext.getBodyAsJson());
