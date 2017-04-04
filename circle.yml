@@ -12,3 +12,9 @@ test:
     - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
     - find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
     - find . -type f -name "*.log" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+
+deployment:
+  staging:
+    branch: master
+    commands:
+      - ./docker/create_docker.sh
