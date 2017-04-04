@@ -40,6 +40,9 @@ public class RiskLimitUtilizationModel extends AbstractModel {
 
     @Override
     protected void validateMissingFields() {
+        if ((!containsKey("warningLevel")) && (!containsKey("throttleLevel")) && (!containsKey("rejectLevel"))) {
+            throw new IllegalArgumentException("Missing fields in model: 'warningLevel || throttleLevel || rejectLevel'");
+        }
         List<String> missingFields = Stream.of(getHeader(), getKeys(), getNonKeys())
                 .flatMap(Collection::stream)
                 .filter(field -> !"warningLevel".equals(field))
@@ -49,10 +52,6 @@ public class RiskLimitUtilizationModel extends AbstractModel {
                 .collect(Collectors.toList());
         if (!missingFields.isEmpty()) {
             throw new IllegalArgumentException("Missing fields in model: " + missingFields.toString());
-        }
-        if ((!containsKey("warningLevel")) && (!containsKey("throttleLevel")) && (!containsKey("rejectLevel"))) {
-            System.out.println(fieldNames());
-            throw new IllegalArgumentException("Missing one of the 'levels' field in model");
         }
     }
 }

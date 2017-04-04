@@ -50,7 +50,7 @@ public abstract class AbstractModel extends JsonObject {
                 .filter(field -> !getNonKeys().contains(field))
                 .collect(Collectors.toList());
         if (!unknownFields.isEmpty()) {
-            throw new IllegalArgumentException("Unknown field in model: " + unknownFields.toString());
+            throw new IllegalArgumentException("Unknown fields in model: " + unknownFields.toString());
         }
     }
 

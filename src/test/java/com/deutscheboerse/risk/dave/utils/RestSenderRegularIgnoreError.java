@@ -9,8 +9,8 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 
-public class RestSenderIgnoreError extends RestSenderRegular {
-    public RestSenderIgnoreError(Vertx vertx) {
+public class RestSenderRegularIgnoreError extends RestSenderRegular {
+    public RestSenderRegularIgnoreError(Vertx vertx) {
         super(vertx);
     }
 
