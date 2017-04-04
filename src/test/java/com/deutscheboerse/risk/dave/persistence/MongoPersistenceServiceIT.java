@@ -138,7 +138,7 @@ public class MongoPersistenceServiceIT extends BaseTest {
     }
 
     @Test
-    public void testConnectionStatusError(TestContext context) throws InterruptedException {
+    public void testConnectionStatusErrorAfterStore(TestContext context) throws InterruptedException {
         JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("updateCollectionWithOptions").add("runCommand"));
 
         final PersistenceService persistenceErrorProxy = getPersistenceErrorProxy(proxyConfig);
@@ -150,6 +150,25 @@ public class MongoPersistenceServiceIT extends BaseTest {
         rootLogger.detachAppender(stdout);
         testAppender.start();
         persistenceErrorProxy.storeAccountMargin(model, context.asyncAssertFailure());
+        testAppender.waitForMessageContains(Level.ERROR, "Still disconnected");
+        testAppender.stop();
+        rootLogger.addAppender(stdout);
+
+        persistenceErrorProxy.close();
+    }
+
+    @Test
+    public void testConnectionStatusErrorAfterQuery(TestContext context) throws InterruptedException {
+        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("runCommand"));
+
+        final PersistenceService persistenceErrorProxy = getPersistenceErrorProxy(proxyConfig);
+        persistenceErrorProxy.initialize(context.asyncAssertSuccess());
+
+        Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
+        rootLogger.detachAppender(stdout);
+        testAppender.start();
+        AccountMarginModel model = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
+        persistenceErrorProxy.queryAccountMargin(RequestType.LATEST, DataHelper.getQueryParams(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.ERROR, "Still disconnected");
         testAppender.stop();
         rootLogger.addAppender(stdout);

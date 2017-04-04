@@ -95,35 +95,35 @@ public class MongoPersistenceService implements PersistenceService {
 
     @Override
     public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, ACCOUNT_MARGIN_COLLECTION, query, new AccountMarginModel(), resultHandler);
+        this.query(type, ACCOUNT_MARGIN_COLLECTION, query, new AccountMarginModel(), resultHandler);
     }
 
     @Override
     public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, LIQUI_GROUP_MARGIN_COLLECTION, query, new LiquiGroupMarginModel(), resultHandler);
+        this.query(type, LIQUI_GROUP_MARGIN_COLLECTION, query, new LiquiGroupMarginModel(), resultHandler);
     }
 
     @Override
     public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, new LiquiGroupSplitMarginModel(), resultHandler);
+        this.query(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, new LiquiGroupSplitMarginModel(), resultHandler);
     }
 
     @Override
     public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, POOL_MARGIN_COLLECTION, query, new PoolMarginModel(), resultHandler);
+        this.query(type, POOL_MARGIN_COLLECTION, query, new PoolMarginModel(), resultHandler);
     }
 
     @Override
     public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, POSITION_REPORT_COLLECTION, query, new PositionReportModel(), resultHandler);
+        this.query(type, POSITION_REPORT_COLLECTION, query, new PositionReportModel(), resultHandler);
     }
 
     @Override
     public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.find(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, new RiskLimitUtilizationModel(), resultHandler);
+        this.query(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, new RiskLimitUtilizationModel(), resultHandler);
     }
 
-    private void find(RequestType type, String collection, JsonObject query, AbstractModel model, Handler<AsyncResult<String>> resultHandler) {
+    private void query(RequestType type, String collection, JsonObject query, AbstractModel model, Handler<AsyncResult<String>> resultHandler) {
         LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
         BiFunction<JsonObject, AbstractModel, JsonArray> getPipeline;
         switch(type) {
