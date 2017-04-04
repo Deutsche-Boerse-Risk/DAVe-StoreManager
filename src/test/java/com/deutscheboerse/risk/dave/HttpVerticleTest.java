@@ -10,11 +10,10 @@ import com.deutscheboerse.risk.dave.persistence.*;
 import com.deutscheboerse.risk.dave.restapi.StoreApi;
 import com.deutscheboerse.risk.dave.utils.*;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -336,6 +335,52 @@ public class HttpVerticleTest extends BaseTest {
         async.awaitSuccess(30000);
     }
 
+    @Test
+    public void testQueryError(TestContext context) throws InterruptedException {
+        ErrorPersistenceService persistenceService = new ErrorPersistenceService();
+        MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
+
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(BaseTest.getHttpConfig());
+        Async asyncDeploy = context.async();
+        vertx.deployVerticle(HttpVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
+        asyncDeploy.awaitSuccess();
+
+        JsonObject queryParams = new JsonObject()
+                .put("clearer", "CLEARER")
+                .put("member", "MEMBER")
+                .put("account", "ACCOUNT");
+        final Async async = context.async();
+        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+            context.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(), res.statusCode());
+            async.complete();
+        });
+        async.awaitSuccess(30000);
+
+        ProxyHelper.unregisterService(serviceMessageConsumer);
+    }
+
+    @Test
+    public void testStoreUnknownModel(TestContext context) {
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(BaseTest.getHttpConfig());
+        Async asyncDeploy = context.async();
+        vertx.deployVerticle(HttpVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
+        asyncDeploy.awaitSuccess();
+
+        final Async async = context.async();
+        vertx.createHttpClient().request(HttpMethod.POST,
+                BaseTest.HTTP_PORT,
+                "localhost",
+                String.format("%s/store/unknown", HttpVerticle.API_PREFIX),
+                response -> {
+                    context.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.statusCode());
+                    async.complete();
+                })
+                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .end(new JsonObject().encode());
+
+        async.awaitSuccess(30000);
+    }
+
     private void testStore(TestContext context, int msgCount, Consumer<Handler<AsyncResult<Void>>> sender) {
         Async async = context.async(msgCount);
 
@@ -367,12 +412,10 @@ public class HttpVerticleTest extends BaseTest {
 
         sender.accept(context.asyncAssertSuccess());
         testAppender.waitForMessageCount(Level.ERROR, msgCount);
-        ILoggingEvent logMessage = testAppender.getLastMessage(Level.ERROR);
+        testAppender.waitForMessageContains(Level.ERROR, errorMessage);
         testAppender.stop();
         rootLogger.addAppender(stdout);
 
-        context.assertEquals(Level.ERROR, logMessage.getLevel());
-        context.assertTrue(logMessage.getFormattedMessage().contains(errorMessage));
         ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 

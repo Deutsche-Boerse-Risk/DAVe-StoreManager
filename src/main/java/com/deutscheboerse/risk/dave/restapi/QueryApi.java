@@ -17,6 +17,7 @@ import io.vertx.serviceproxy.ProxyHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class QueryApi {
     private static final Logger LOG = LoggerFactory.getLogger(QueryApi.class);
@@ -77,7 +78,6 @@ public class QueryApi {
                 routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).end();
                 break;
         }
-
     }
 
     private JsonObject createParamsFromContext(RoutingContext routingContext, AbstractModel model) {
@@ -89,7 +89,7 @@ public class QueryApi {
                     final String parameterName = entry.getKey();
                     final String parameterValue = entry.getValue();
                     try {
-                        String decodedValue = URLDecoder.decode(parameterValue, "UTF-8");
+                        String decodedValue = URLDecoder.decode(parameterValue, StandardCharsets.UTF_8.toString());
                         Class<?> parameterType = getParameterType(parameterName, model);
                         result.put(parameterName, convertValue(decodedValue, parameterType));
                     } catch (UnsupportedEncodingException e) {
