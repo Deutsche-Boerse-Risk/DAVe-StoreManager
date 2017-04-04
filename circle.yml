@@ -1,0 +1,14 @@
+machine:
+  java:
+    version: oraclejdk8
+  services:
+    - docker
+
+test:
+  override:
+    - mvn -Ddocker.keepContainer -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -B clean verify sonar:sonar
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    - find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    - find . -type f -name "*.log" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
