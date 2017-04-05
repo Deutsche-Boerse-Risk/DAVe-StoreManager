@@ -16,10 +16,7 @@
  import io.vertx.ext.unit.TestContext;
  import io.vertx.ext.unit.junit.VertxUnitRunner;
  import io.vertx.serviceproxy.ProxyHelper;
- import org.junit.AfterClass;
- import org.junit.Assert;
- import org.junit.BeforeClass;
- import org.junit.Test;
+ import org.junit.*;
  import org.junit.runner.RunWith;
  import org.slf4j.LoggerFactory;
 
@@ -27,6 +24,7 @@
  import java.util.ArrayList;
  import java.util.List;
  import java.util.Optional;
+ import java.util.UUID;
  import java.util.function.BiConsumer;
 
 @RunWith(VertxUnitRunner.class)
@@ -538,8 +536,9 @@ public class MongoPersistenceServiceIT extends BaseTest {
     private PersistenceService getPersistenceErrorProxy(JsonObject config) {
         MongoErrorClient mongoErrorClient = new MongoErrorClient(config);
 
-        ProxyHelper.registerService(PersistenceService.class, vertx, new MongoPersistenceService(vertx, mongoErrorClient), PersistenceService.SERVICE_ADDRESS+"Error");
-        return ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS+"Error");
+        final String serviceAddress = PersistenceService.SERVICE_ADDRESS + UUID.randomUUID().getLeastSignificantBits();
+        ProxyHelper.registerService(PersistenceService.class, vertx, new MongoPersistenceService(vertx, mongoErrorClient), serviceAddress);
+        return ProxyHelper.createProxy(PersistenceService.class, vertx, serviceAddress);
     }
 
     private static JsonObject getQueryParams(AbstractModel model) {
@@ -554,6 +553,11 @@ public class MongoPersistenceServiceIT extends BaseTest {
                 .filter(entry -> !model.getKeys().contains(entry.getKey()))
                 .forEach(entry -> snapshotData.put(entry.getKey(), entry.getValue()));
         context.assertEquals(snapshotData, snapshots.getJsonObject(position));
+    }
+
+    @After
+    public void cleanup() {
+        MongoPersistenceServiceIT.testAppender.clear();
     }
 
     @AfterClass

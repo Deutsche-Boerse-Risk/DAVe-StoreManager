@@ -18,6 +18,7 @@ import io.vertx.serviceproxy.ServiceException;
 import javax.inject.Inject;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
@@ -45,7 +46,7 @@ public class MongoPersistenceService implements PersistenceService {
 
     @Override
     public void initialize(Handler<AsyncResult<Void>> resultHandler) {
-        initDb()
+        this.createMissingCollections()
                 .compose(i -> createIndexes())
                 .setHandler(ar -> {
                     if (ar.succeeded()) {
@@ -261,36 +262,49 @@ public class MongoPersistenceService implements PersistenceService {
         return result;
     }
 
-    private Future<Void> initDb() {
-        Future<Void> initDbFuture = Future.future();
+    private Future<Void> createMissingCollections() {
+        return getMissingCollections()
+                .compose(this::createCollections);
+    }
+
+    private Future<List<String>> getMissingCollections() {
+        Future<List<String>> missingCollectionsFuture = Future.future();
         mongo.getCollections(res -> {
             if (res.succeeded()) {
                 List<String> mongoCollections = res.result();
-                List<Future> futs = new ArrayList<>();
-                MongoPersistenceService.getRequiredCollections().stream()
-                        .filter(collection -> ! mongoCollections.contains(collection))
-                        .forEach(collection -> {
-                            LOG.info("Collection {} is missing and will be added", collection);
-                            Future<Void> fut = Future.future();
-                            mongo.createCollection(collection, fut);
-                            futs.add(fut);
-                        });
-                CompositeFuture.all(futs).setHandler(ar -> {
-                    if (ar.succeeded()) {
-                        LOG.info("Mongo has all needed collections for DAVe");
-                        LOG.info("Initialized MongoDB");
-                        initDbFuture.complete();
-                    } else {
-                        LOG.error("Failed to add all collections needed for DAVe to Mongo", ar.cause());
-                        initDbFuture.fail(ar.cause());
-                    }
-                });
+                List<String> missingCollections = MongoPersistenceService.getRequiredCollections().stream()
+                        .filter(collection -> !mongoCollections.contains(collection))
+                        .collect(Collectors.toList());
+                missingCollectionsFuture.complete(missingCollections);
             } else {
                 LOG.error("Failed to get collection list", res.cause());
-                initDbFuture.fail(res.cause());
+                missingCollectionsFuture.fail(res.cause());
             }
         });
-        return initDbFuture;
+        return missingCollectionsFuture;
+    }
+
+    private Future<Void> createCollections(List<String> collections) {
+        Future<Void> createCollectionsFuture = Future.future();
+
+        List<Future> futs = new ArrayList<>();
+        collections.forEach(collection -> {
+            LOG.info("Collection {} is missing and will be added", collection);
+            Future<Void> fut = Future.future();
+            mongo.createCollection(collection, fut);
+            futs.add(fut);
+        });
+        CompositeFuture.all(futs).setHandler(ar -> {
+            if (ar.succeeded()) {
+                LOG.info("Mongo has all needed collections for DAVe");
+                LOG.info("Initialized MongoDB");
+                createCollectionsFuture.complete();
+            } else {
+                LOG.error("Failed to add all collections needed for DAVe to Mongo", ar.cause());
+                createCollectionsFuture.fail(ar.cause());
+            }
+        });
+        return createCollectionsFuture;
     }
 
     private Future<Void> createIndexes() {
