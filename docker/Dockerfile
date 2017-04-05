@@ -1,4 +1,4 @@
-FROM		openjdk:8-jre
+FROM openjdk:8-jre
 
 RUN addgroup --system dave && adduser --system --home /home/dave --group dave
 COPY ./dave-store-manager-1.0-SNAPSHOT /home/dave

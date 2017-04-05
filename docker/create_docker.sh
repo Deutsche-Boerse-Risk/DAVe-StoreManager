@@ -3,8 +3,6 @@
 # Copy the DAVe binaries
 cp -r -v ./target/dave-store-manager-1.0-SNAPSHOT/dave-store-manager-1.0-SNAPSHOT ./docker/dave-store-manager-1.0-SNAPSHOT
 
-# Delete the prefilled
-rm -r ./docker/dave-store-manager-1.0-SNAPSHOT/etc/storemanager.conf
 docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 docker build -t dbgdave/dave-store-manager:${CIRCLE_SHA1} ./docker/
 docker tag -f dbgdave/dave-store-manager:${CIRCLE_SHA1} docker.io/dbgdave/dave-store-manager:${CIRCLE_SHA1}
