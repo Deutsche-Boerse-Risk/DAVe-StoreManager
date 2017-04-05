@@ -453,5 +453,6 @@ public class HttpVerticleTest extends BaseTest {
     public void cleanup(TestContext context) {
         this.vertx.close(context.asyncAssertSuccess());
         rootLogger.detachAppender(testAppender);
+        testAppender.clear();
     }
 }

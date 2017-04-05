@@ -16,10 +16,7 @@
  import io.vertx.ext.unit.TestContext;
  import io.vertx.ext.unit.junit.VertxUnitRunner;
  import io.vertx.serviceproxy.ProxyHelper;
- import org.junit.AfterClass;
- import org.junit.Assert;
- import org.junit.BeforeClass;
- import org.junit.Test;
+ import org.junit.*;
  import org.junit.runner.RunWith;
  import org.slf4j.LoggerFactory;
 
@@ -554,6 +551,11 @@ public class MongoPersistenceServiceIT extends BaseTest {
                 .filter(entry -> !model.getKeys().contains(entry.getKey()))
                 .forEach(entry -> snapshotData.put(entry.getKey(), entry.getValue()));
         context.assertEquals(snapshotData, snapshots.getJsonObject(position));
+    }
+
+    @After
+    public void cleanup() {
+        MongoPersistenceServiceIT.testAppender.clear();
     }
 
     @AfterClass

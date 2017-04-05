@@ -35,6 +35,10 @@ public class TestAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
     }
 
+    public void clear() {
+        this.levelListMap.clear();
+    }
+
     public synchronized void waitForMessageContains(Level level, String message) throws InterruptedException {
         while (!findHelper(level, message).isPresent()) {
             this.wait(5000);
