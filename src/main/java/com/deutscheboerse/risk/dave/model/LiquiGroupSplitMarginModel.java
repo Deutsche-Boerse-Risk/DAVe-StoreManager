@@ -33,7 +33,7 @@ public class LiquiGroupSplitMarginModel extends AbstractModel {
     @Override
     public Map<String, Class> getNonKeysDescriptor() {
         Map<String, Class<?>> nonKeys = new LinkedHashMap<>();
-        nonKeys.put("premiumMargin", String.class);
+        nonKeys.put("premiumMargin", Double.class);
         nonKeys.put("marketRisk", Double.class);
         nonKeys.put("liquRisk", Double.class);
         nonKeys.put("longOptionCredit", Double.class);
