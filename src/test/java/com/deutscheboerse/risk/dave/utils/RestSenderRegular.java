@@ -5,6 +5,7 @@ import com.deutscheboerse.risk.dave.HttpVerticle;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -34,7 +35,8 @@ public class RestSenderRegular extends BaseTest  implements RestSender {
 
     public RestSenderRegular(Vertx vertx) {
         this.vertx = vertx;
-        this.httpClient = this.vertx.createHttpClient();
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        this.httpClient = this.vertx.createHttpClient(httpClientOptions);
     }
 
     public void sendAllData(Handler<AsyncResult<Void>> handler) {

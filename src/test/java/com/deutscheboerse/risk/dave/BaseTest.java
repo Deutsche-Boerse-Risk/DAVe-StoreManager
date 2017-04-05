@@ -1,12 +1,22 @@
 package com.deutscheboerse.risk.dave;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.SelfSignedCertificate;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.UUID;
 
 public class BaseTest {
     private static final int DB_PORT =  Integer.getInteger("mongodb.port", 27017);
     protected static final int HTTP_PORT = Integer.getInteger("http.port", 8083);
+    public static final SelfSignedCertificate HTTP_SERVER_CERTIFICATE = SelfSignedCertificate.create();
 
 
     protected static JsonObject getGlobalConfig() {
@@ -16,8 +26,12 @@ public class BaseTest {
     }
 
     static JsonObject getHttpConfig() {
+        Buffer pemKeyBytes = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getKeyPath());
+        Buffer pemCertBytes = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getCertPath());
         return new JsonObject()
-                .put("port", HTTP_PORT);
+                .put("port", HTTP_PORT)
+                .put("sslKey", pemKeyBytes.toString())
+                .put("sslCert", pemCertBytes.toString());
     }
 
     protected static JsonObject getMongoConfig() {

@@ -12,10 +12,12 @@ import com.deutscheboerse.risk.dave.utils.*;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.PemTrustOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -260,7 +262,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async async = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.OK.code(), res.statusCode());
             res.bodyHandler(body -> {
                 JsonArray bd = body.toJsonArray();
@@ -269,7 +272,7 @@ public class HttpVerticleTest extends BaseTest {
             });
         });
 
-        async.awaitSuccess(30000);
+        async.awaitSuccess(300000);
         ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 
@@ -286,7 +289,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async async = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), res.statusCode());
             async.complete();
         });
@@ -307,7 +311,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async async = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), res.statusCode());
             async.complete();
         });
@@ -327,7 +332,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async async = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(String.format("%s/query/unknown/latest", HttpVerticle.API_PREFIX)).addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(String.format("%s/query/unknown/latest", HttpVerticle.API_PREFIX)).addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.NOT_FOUND.code(), res.statusCode());
             async.complete();
         });
@@ -350,7 +356,8 @@ public class HttpVerticleTest extends BaseTest {
                 .put("member", "MEMBER")
                 .put("account", "ACCOUNT");
         final Async async = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(), res.statusCode());
             async.complete();
         });
@@ -367,7 +374,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async async = context.async();
-        vertx.createHttpClient().request(HttpMethod.POST,
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).request(HttpMethod.POST,
                 BaseTest.HTTP_PORT,
                 "localhost",
                 String.format("%s/store/unknown", HttpVerticle.API_PREFIX),
@@ -437,7 +445,8 @@ public class HttpVerticleTest extends BaseTest {
         asyncDeploy.awaitSuccess();
 
         final Async asyncQuerySent = context.async();
-        vertx.createHttpClient().getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(uri).addParams(queryParams).build(), res -> {
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", new URIBuilder(uri).addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.OK.code(), res.statusCode());
             res.bodyHandler(body -> {
                 JsonArray bd = body.toJsonArray();

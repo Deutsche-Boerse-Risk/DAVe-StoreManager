@@ -6,6 +6,7 @@ import com.deutscheboerse.risk.dave.MainVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -52,7 +53,8 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "healthz")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        vertx.createHttpClient().getNow(HTTP_PORT, "localhost", HttpVerticle.REST_HEALTHZ,
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_HEALTHZ,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -63,7 +65,8 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "readiness")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        vertx.createHttpClient().getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -78,7 +81,8 @@ public class HealthCheckIT extends BaseTest {
         HealthCheck healthCheck = new HealthCheck(vertx);
         healthCheck.setComponentFailed(HealthCheck.Component.PERSISTENCE_SERVICE);
 
-        vertx.createHttpClient().getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
                 assertEqualsHttpHandler(503, expected.encode(), context));
     }
 

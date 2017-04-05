@@ -4,9 +4,12 @@ import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.restapi.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
@@ -14,8 +17,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 
 import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.HTTP;
 
-public class HttpVerticle extends AbstractVerticle
-{
+public class HttpVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(HttpVerticle.class);
 
     private static final Integer DEFAULT_PORT = 8080;
@@ -61,11 +63,25 @@ public class HttpVerticle extends AbstractVerticle
         int port = config().getInteger("port", HttpVerticle.DEFAULT_PORT);
 
         LOG.info("Starting web server on port {}", port);
-        server = vertx.createHttpServer()
+        HttpServerOptions httpServerOptions = this.createHttpServerOptions();
+        server = vertx.createHttpServer(httpServerOptions)
                 .requestHandler(router::accept)
                 .listen(port, webServerFuture.completer());
 
         return webServerFuture;
+    }
+
+    private HttpServerOptions createHttpServerOptions() {
+        HttpServerOptions httpOptions = new HttpServerOptions();
+        this.setSSL(httpOptions);
+        return httpOptions;
+    }
+
+    private void setSSL(HttpServerOptions httpServerOptions) {
+        PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
+                .setKeyValue(Buffer.buffer(config().getString("sslKey")))
+                .setCertValue(Buffer.buffer(config().getString("sslCert")));
+        httpServerOptions.setSsl(true).setPemKeyCertOptions(pemKeyCertOptions);
     }
 
     private Router configureRouter() {
