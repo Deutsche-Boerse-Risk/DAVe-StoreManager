@@ -24,6 +24,7 @@
  import java.util.ArrayList;
  import java.util.List;
  import java.util.Optional;
+ import java.util.UUID;
  import java.util.function.BiConsumer;
 
 @RunWith(VertxUnitRunner.class)
@@ -535,8 +536,9 @@ public class MongoPersistenceServiceIT extends BaseTest {
     private PersistenceService getPersistenceErrorProxy(JsonObject config) {
         MongoErrorClient mongoErrorClient = new MongoErrorClient(config);
 
-        ProxyHelper.registerService(PersistenceService.class, vertx, new MongoPersistenceService(vertx, mongoErrorClient), PersistenceService.SERVICE_ADDRESS+"Error");
-        return ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS+"Error");
+        final String serviceAddress = PersistenceService.SERVICE_ADDRESS + UUID.randomUUID().getLeastSignificantBits();
+        ProxyHelper.registerService(PersistenceService.class, vertx, new MongoPersistenceService(vertx, mongoErrorClient), serviceAddress);
+        return ProxyHelper.createProxy(PersistenceService.class, vertx, serviceAddress);
     }
 
     private static JsonObject getQueryParams(AbstractModel model) {
