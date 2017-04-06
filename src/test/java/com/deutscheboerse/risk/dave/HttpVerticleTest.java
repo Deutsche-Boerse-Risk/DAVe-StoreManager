@@ -10,14 +10,16 @@ import com.deutscheboerse.risk.dave.persistence.*;
 import com.deutscheboerse.risk.dave.restapi.StoreApi;
 import com.deutscheboerse.risk.dave.utils.*;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.PemTrustOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -240,6 +242,36 @@ public class HttpVerticleTest extends BaseTest {
     public void testQueryRiskLimitUtilization(TestContext context) {
         this.testQueryCompleteUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API + "/latest", RequestType.LATEST, RiskLimitUtilizationModel.class);
         this.testQueryCompleteUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API + "/history", RequestType.HISTORY, RiskLimitUtilizationModel.class);
+    }
+
+    @Test
+    public void testSSLClientAuthentication(TestContext context) {
+        EchoPersistenceService persistenceService = new EchoPersistenceService();
+        MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
+
+        JsonObject httpConfig = BaseTest.getHttpConfig();
+        httpConfig.put("sslRequireClientAuth", true);
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(httpConfig);
+        Async asyncDeploy = context.async();
+        vertx.deployVerticle(HttpVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
+        asyncDeploy.awaitSuccess();
+
+        final Async asyncWithoutCert = context.async();
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        vertx.createHttpClient(httpClientOptions).get(BaseTest.HTTP_PORT, "localhost", QUERY_POSITION_REPORT_API + "/latest", res -> {
+            context.fail("Connected to HTTPS with required client authentication without certificate!");
+            }).exceptionHandler(res -> asyncWithoutCert.complete()).end();
+        asyncWithoutCert.awaitSuccess(30000);
+
+        final Async asyncWithCert = context.async();
+        httpClientOptions.setPemKeyCertOptions(BaseTest.HTTP_CLIENT_CERTIFICATE.keyCertOptions());
+        vertx.createHttpClient(httpClientOptions).getNow(BaseTest.HTTP_PORT, "localhost", QUERY_POSITION_REPORT_API + "/latest", res -> {
+            context.assertEquals(HttpResponseStatus.OK.code(), res.statusCode());
+            asyncWithCert.complete();
+        });
+
+        asyncWithCert.awaitSuccess(30000);
+        ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 
     @Test

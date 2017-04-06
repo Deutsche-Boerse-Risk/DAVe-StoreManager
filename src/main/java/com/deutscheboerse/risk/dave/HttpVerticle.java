@@ -1,15 +1,20 @@
 package com.deutscheboerse.risk.dave;
 
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
-import com.deutscheboerse.risk.dave.restapi.*;
+import com.deutscheboerse.risk.dave.restapi.QueryApi;
+import com.deutscheboerse.risk.dave.restapi.StoreApi;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
@@ -21,6 +26,7 @@ public class HttpVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(HttpVerticle.class);
 
     private static final Integer DEFAULT_PORT = 8080;
+    private static final Boolean DEFAULT_SSL_REQUIRE_CLIENT_AUTH = false;
 
     private static final String API_VERSION = "v1.0";
     public static final String API_PREFIX = String.format("/api/%s", API_VERSION);
@@ -40,7 +46,13 @@ public class HttpVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        LOG.info("Starting {} with configuration: {}", HttpVerticle.class.getSimpleName(), config().encodePrettily());
+        JsonObject configWithoutSensitiveInfo = config().copy()
+                .put("sslKey", "******************")
+                .put("sslCert", "******************");
+        JsonArray trustCertsWithoutSensitiveInfo = new JsonArray();
+        config().getJsonArray("sslTrustCerts").forEach(key -> trustCertsWithoutSensitiveInfo.add("******************"));
+        configWithoutSensitiveInfo.put("sslTrustCerts", new JsonArray().add("******************"));
+        LOG.info("Starting {} with configuration: {}", HttpVerticle.class.getSimpleName(), configWithoutSensitiveInfo.encodePrettily());
 
         healthCheck = new HealthCheck(this.vertx);
 
@@ -78,10 +90,23 @@ public class HttpVerticle extends AbstractVerticle {
     }
 
     private void setSSL(HttpServerOptions httpServerOptions) {
+        httpServerOptions.setSsl(true);
         PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
                 .setKeyValue(Buffer.buffer(config().getString("sslKey")))
                 .setCertValue(Buffer.buffer(config().getString("sslCert")));
-        httpServerOptions.setSsl(true).setPemKeyCertOptions(pemKeyCertOptions);
+        httpServerOptions.setPemKeyCertOptions(pemKeyCertOptions);
+
+        PemTrustOptions pemTrustOptions = new PemTrustOptions();
+        config().getJsonArray("sslTrustCerts", new JsonArray())
+                .stream()
+                .map(Object::toString)
+                .forEach(trustKey -> pemTrustOptions.addCertValue(Buffer.buffer(trustKey)));
+        if (!pemTrustOptions.getCertValues().isEmpty()) {
+            httpServerOptions.setPemTrustOptions(pemTrustOptions);
+            ClientAuth clientAuth = config().getBoolean("sslRequireClientAuth", DEFAULT_SSL_REQUIRE_CLIENT_AUTH) ?
+                    ClientAuth.REQUIRED : ClientAuth.REQUEST;
+            httpServerOptions.setClientAuth(clientAuth);
+        }
     }
 
     private Router configureRouter() {

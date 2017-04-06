@@ -2,6 +2,7 @@ package com.deutscheboerse.risk.dave;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SelfSignedCertificate;
 
@@ -17,7 +18,7 @@ public class BaseTest {
     private static final int DB_PORT =  Integer.getInteger("mongodb.port", 27017);
     protected static final int HTTP_PORT = Integer.getInteger("http.port", 8083);
     public static final SelfSignedCertificate HTTP_SERVER_CERTIFICATE = SelfSignedCertificate.create();
-
+    public static final SelfSignedCertificate HTTP_CLIENT_CERTIFICATE = SelfSignedCertificate.create();
 
     protected static JsonObject getGlobalConfig() {
         return new JsonObject()
@@ -26,12 +27,18 @@ public class BaseTest {
     }
 
     static JsonObject getHttpConfig() {
-        Buffer pemKeyBytes = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getKeyPath());
-        Buffer pemCertBytes = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getCertPath());
+        JsonArray sslTrustCerts = new JsonArray();
+        HTTP_CLIENT_CERTIFICATE.trustOptions().getCertPaths().forEach(certPath -> {
+            Buffer certBuffer = Vertx.vertx().fileSystem().readFileBlocking(certPath);
+            sslTrustCerts.add(certBuffer.toString());
+        });
+        Buffer pemKeyBuffer = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getKeyPath());
+        Buffer pemCertBuffer = Vertx.vertx().fileSystem().readFileBlocking(HTTP_SERVER_CERTIFICATE.keyCertOptions().getCertPath());
         return new JsonObject()
                 .put("port", HTTP_PORT)
-                .put("sslKey", pemKeyBytes.toString())
-                .put("sslCert", pemCertBytes.toString());
+                .put("sslKey", pemKeyBuffer.toString())
+                .put("sslCert", pemCertBuffer.toString())
+                .put("sslTrustCerts", sslTrustCerts);
     }
 
     protected static JsonObject getMongoConfig() {
