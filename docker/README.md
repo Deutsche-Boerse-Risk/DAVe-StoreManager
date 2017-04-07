@@ -12,6 +12,13 @@ To actually use the application, you have to point to a host running the MongoDB
 
 ## Options
 
+### General
+
+| Option | Explanation | Example |
+|--------|-------------|---------|
+| `JAVA_OPTS` | JVM options | `-Xmx=512m` |
+
+
 ### Logging
 
 Allows to configure logging parameters. Supported log levels are `off`, `error`, `warn`, `info`, `debug`, `trace` and `all`.

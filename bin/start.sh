@@ -12,7 +12,7 @@ export DAVE_LOG_LEVEL="${DAVE_LOG_LEVEL:-info}"
 STOREMANAGER_LIB=${STOREMANAGER_ROOT}/lib
 STOREMANAGER_ETC=${STOREMANAGER_ROOT}/etc
 
-java ${DEBUG} \
+java ${JAVA_OPTS} ${DEBUG} \
      -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory \
      -Dlogback.configurationFile=${STOREMANAGER_ETC}/logback.xml \
      -Ddave.configurationFile=${STOREMANAGER_ETC}/storemanager.conf \
