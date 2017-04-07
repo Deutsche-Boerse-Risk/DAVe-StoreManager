@@ -6,7 +6,7 @@
 
 To run DAVe Store Manager  in Docker, you have to pass the environment variables to the `docker run` command.
 
-`docker run -ti -P -e DAVE_HTTP_PORT=8080 -e DAVE_HTTP_SSL_CERT="$webCrt" -e DAVE_HTTP_SSL_KEY="$webKey" dbgdave/dave-store-manager:latest`
+`docker run -ti -P -e DAVE_HTTP_SSL_CERT="$webCrt" -e DAVE_HTTP_SSL_KEY="$webKey" dbgdave/dave-store-manager:latest`
 
 To actually use the application, you have to point to a host running the MongoDB database.
 
@@ -39,7 +39,6 @@ Allows to configure logging parameters. Supported log levels are `off`, `error`,
 
 | Option | Explanation | Example |
 |--------|-------------|---------|
-| `DAVE_HTTP_PORT` | Enable the HTTP server | `8080` |
 | `DAVE_HTTP_SSL_KEY` | Private key of the HTTP server in PEM format  |  |
 | `DAVE_HTTP_SSL_CERT` | Public key of the HTTP server in CRT format |  |
 | `DAVE_HTTP_SSL_TRUST_CERTS` | List of trusted CA for SSL client authentication |  |
