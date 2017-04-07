@@ -39,7 +39,7 @@ Allows to configure logging parameters. Supported log levels are `off`, `error`,
 
 | Option | Explanation | Example |
 |--------|-------------|---------|
-| `DAVE_HTTP_SSL_KEY` | Private key of the HTTP server in PEM format  |  |
+| `DAVE_HTTP_SSL_KEY` | Private key of the HTTP server in PEM format |  |
 | `DAVE_HTTP_SSL_CERT` | Public key of the HTTP server in CRT format |  |
 | `DAVE_HTTP_SSL_TRUST_CERTS` | List of trusted CA for SSL client authentication |  |
-| `DAVE_HTTP_SSL_REQUIRE_CLIENT_AUTH` | Make SSL Client Authentication required | `1` |
+| `DAVE_HTTP_SSL_REQUIRE_CLIENT_AUTH` | Make SSL Client Authentication required | `true` |

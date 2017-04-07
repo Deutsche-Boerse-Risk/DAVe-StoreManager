@@ -53,8 +53,7 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "healthz")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_HEALTHZ,
+        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_HEALTHZ,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -65,8 +64,7 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "readiness")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
+        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_READINESS,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -81,8 +79,7 @@ public class HealthCheckIT extends BaseTest {
         HealthCheck healthCheck = new HealthCheck(vertx);
         healthCheck.setComponentFailed(HealthCheck.Component.PERSISTENCE_SERVICE);
 
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(HTTP_PORT, "localhost", HttpVerticle.REST_READINESS,
+        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_READINESS,
                 assertEqualsHttpHandler(503, expected.encode(), context));
     }
 

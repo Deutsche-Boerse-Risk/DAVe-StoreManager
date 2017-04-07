@@ -6,24 +6,20 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SelfSignedCertificate;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.UUID;
 
 public class BaseTest {
     private static final int DB_PORT =  Integer.getInteger("mongodb.port", 27017);
     protected static final int HTTP_PORT = Integer.getInteger("http.port", 8083);
+    protected static final int HEALTHCHECK_PORT = Integer.getInteger("healthcheck.port", 8084);
     public static final SelfSignedCertificate HTTP_SERVER_CERTIFICATE = SelfSignedCertificate.create();
-    public static final SelfSignedCertificate HTTP_CLIENT_CERTIFICATE = SelfSignedCertificate.create();
+    static final SelfSignedCertificate HTTP_CLIENT_CERTIFICATE = SelfSignedCertificate.create();
 
     protected static JsonObject getGlobalConfig() {
         return new JsonObject()
                 .put("http", BaseTest.getHttpConfig())
-                .put("mongo", BaseTest.getMongoConfig());
+                .put("mongo", BaseTest.getMongoConfig())
+                .put("healthCheck", BaseTest.getHealthCheckConfig());
     }
 
     static JsonObject getHttpConfig() {
@@ -53,4 +49,10 @@ public class BaseTest {
                 .put("db_name", mongoVerticleConfig.getString("dbName"))
                 .put("connection_string", mongoVerticleConfig.getString("connectionUrl"));
     }
+
+    private static JsonObject getHealthCheckConfig() {
+        return new JsonObject()
+                .put("port", HEALTHCHECK_PORT);
+    }
+
 }

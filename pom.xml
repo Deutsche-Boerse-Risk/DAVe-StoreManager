@@ -65,6 +65,7 @@
                     <configuration>
                         <systemPropertyVariables>
                             <http.port>${http.port}</http.port>
+                            <healthcheck.port>${healthcheck.port}</healthcheck.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
                         </systemPropertyVariables>
@@ -77,6 +78,7 @@
                     <configuration>
                         <systemPropertyVariables>
                             <http.port>${http.port}</http.port>
+                            <healthcheck.port>${healthcheck.port}</healthcheck.port>
                             <mongodb.port>${mongodb.port}</mongodb.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
@@ -155,6 +157,7 @@
                         <configuration>
                             <portNames>
                                 <portName>http.port</portName>
+                                <portName>healthcheck.port</portName>
                             </portNames>
                           </configuration>
                     </execution>

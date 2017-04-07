@@ -20,6 +20,7 @@ public class MainVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
     private static final String MONGO_CONF_KEY = "mongo";
     private static final String HTTP_CONF_KEY = "http";
+    private static final String HEALTHCHECK_CONF_KEY = "healthCheck";
     private static final int HTTP_VERTICLE_INSTANCES = 5;
     private JsonObject configuration;
     private Map<String, String> verticleDeployments = new HashMap<>();
@@ -30,6 +31,7 @@ public class MainVerticle extends AbstractVerticle {
         this.retrieveConfig()
                 .compose(i -> deployPersistenceVerticle())
                 .compose(i -> deployHttpVerticle())
+                .compose(i -> deployHealthCheckVerticle())
                 .compose(chainFuture::complete, chainFuture);
 
         chainFuture.setHandler(ar -> {
@@ -85,6 +87,10 @@ public class MainVerticle extends AbstractVerticle {
 
     private Future<Void> deployHttpVerticle() {
         return this.deployVerticle(HttpVerticle.class, this.configuration.getJsonObject(HTTP_CONF_KEY, new JsonObject()), HTTP_VERTICLE_INSTANCES);
+    }
+
+    private Future<Void> deployHealthCheckVerticle() {
+        return this.deployVerticle(HealthCheckVerticle.class, this.configuration.getJsonObject(HEALTHCHECK_CONF_KEY, new JsonObject()), 1);
     }
 
     private Future<Void> deployVerticle(Class clazz, JsonObject config, int instances) {

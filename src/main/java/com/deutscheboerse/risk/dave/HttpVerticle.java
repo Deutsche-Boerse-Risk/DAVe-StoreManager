@@ -15,8 +15,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
-import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
@@ -110,20 +108,10 @@ public class HttpVerticle extends AbstractVerticle {
     }
 
     private Router configureRouter() {
-        HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
-        HealthCheckHandler readinessHandler = HealthCheckHandler.create(vertx);
-
-        healthCheckHandler.register("healthz", this::healthz);
-        readinessHandler.register("readiness", this::readiness);
-
         Router router = Router.router(vertx);
 
         LOG.info("Adding route REST API");
         router.route(String.format("%s/*", API_PREFIX)).handler(BodyHandler.create());
-        
-        // HealthCheck API
-        router.get(REST_HEALTHZ).handler(healthCheckHandler);
-        router.get(REST_READINESS).handler(readinessHandler);
         
         // Store API
         StoreApi storeApi = new StoreApi(vertx);
@@ -135,14 +123,6 @@ public class HttpVerticle extends AbstractVerticle {
         router.get(String.format("%s/query/:model/history", API_PREFIX)).handler(queryApi::queryHistoryHandler);
 
         return router;
-    }
-
-    private void healthz(Future<Status> future) {
-        future.complete(Status.OK());
-    }
-
-    private void readiness(Future<Status> future) {
-        future.complete(healthCheck.ready() ? Status.OK() : Status.KO());
     }
 
     @Override
