@@ -9,28 +9,7 @@
     </layout>
   </appender>
 
-  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${STOREMANAGER_LOG}/storemanager.log</file>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <Pattern>
-        %d{yyyy-MM-dd HH:mm:ss} - %msg%n
-      </Pattern>
-    </encoder>
-
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <!-- rollover daily -->
-      <fileNamePattern>${STOREMANAGER_LOG}/archived/storemanager.%d{yyyy-MM-dd}.%i.log
-      </fileNamePattern>
-      <timeBasedFileNamingAndTriggeringPolicy
-        class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-        <maxFileSize>100MB</maxFileSize>
-      </timeBasedFileNamingAndTriggeringPolicy>
-    </rollingPolicy>
-
-  </appender>
-
   <root level="${DAVE_LOG_LEVEL}">
-    <appender-ref ref="FILE" />
     <appender-ref ref="STDOUT" />
   </root>
 

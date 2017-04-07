@@ -6,11 +6,11 @@ WHEREAMI=`dirname "${0}"`
 if [ -z "${STOREMANAGER_ROOT}" ]; then
     export STOREMANAGER_ROOT=`cd "${WHEREAMI}/../" && pwd`
 fi
+
 export DAVE_LOG_LEVEL="${DAVE_LOG_LEVEL:-info}"
 
 STOREMANAGER_LIB=${STOREMANAGER_ROOT}/lib
 STOREMANAGER_ETC=${STOREMANAGER_ROOT}/etc
-export STOREMANAGER_LOG=${STOREMANAGER_ROOT}/log
 
 java ${DEBUG} \
      -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory \
