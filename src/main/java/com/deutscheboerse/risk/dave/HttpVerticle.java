@@ -49,7 +49,7 @@ public class HttpVerticle extends AbstractVerticle {
                 .put("sslCert", "******************");
         JsonArray trustCertsWithoutSensitiveInfo = new JsonArray();
         config().getJsonArray("sslTrustCerts").forEach(key -> trustCertsWithoutSensitiveInfo.add("******************"));
-        configWithoutSensitiveInfo.put("sslTrustCerts", new JsonArray().add("******************"));
+        configWithoutSensitiveInfo.put("sslTrustCerts",trustCertsWithoutSensitiveInfo);
         LOG.info("Starting {} with configuration: {}", HttpVerticle.class.getSimpleName(), configWithoutSensitiveInfo.encodePrettily());
 
         healthCheck = new HealthCheck(this.vertx);
