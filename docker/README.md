@@ -1,6 +1,6 @@
 # DAVe Store Manager Docker image
 
-**DAVe Store Manager** docker image allows DAVe Store Manager to be executed in Docker / Kubernetes. It contains an entrypoint which will take case of the configuration based on environment variables. The different options are described below.
+**DAVe Store Manager** docker image allows DAVe Store Manager to be executed in Docker / Kubernetes. It contains an entrypoint which will take care of the configuration based on environment variables. The different options are described below.
 
 ## Examples
 
