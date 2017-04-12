@@ -2,6 +2,7 @@ package com.deutscheboerse.risk.dave;
 
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
+import com.deutscheboerse.risk.dave.utils.TestConfig;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import com.deutscheboerse.risk.dave.utils.RestSender;
 import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
@@ -21,7 +22,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(VertxUnitRunner.class)
-public class MainVerticleIT extends BaseTest {
+public class MainVerticleIT {
     private Vertx vertx;
     private static int ACCOUNT_MARGIN_COUNT = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1);
     private static int LIQUI_GROUP_MARGIN_COUNT = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1);
@@ -36,11 +37,11 @@ public class MainVerticleIT extends BaseTest {
     }
 
     private MongoClient createMongoClient(JsonObject mongoVerticleConfig) {
-        return MongoClient.createShared(this.vertx, BaseTest.getMongoClientConfig(mongoVerticleConfig));
+        return MongoClient.createShared(this.vertx, TestConfig.getMongoClientConfig(mongoVerticleConfig));
     }
 
     private DeploymentOptions createDeploymentOptions() {
-        return new DeploymentOptions().setConfig(BaseTest.getGlobalConfig());
+        return new DeploymentOptions().setConfig(TestConfig.getGlobalConfig());
     }
 
     @Test
@@ -105,7 +106,7 @@ public class MainVerticleIT extends BaseTest {
     @Test
     public void testFailedDeployment(TestContext context) {
         DeploymentOptions options = createDeploymentOptions();
-        options.getConfig().getJsonObject("http", new JsonObject()).put("port", -1);
+        options.getConfig().getJsonObject("api", new JsonObject()).put("port", -1);
         this.vertx.deployVerticle(MainVerticle.class.getName(), options, context.asyncAssertFailure());
     }
 

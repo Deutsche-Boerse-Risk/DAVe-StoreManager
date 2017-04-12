@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.restapi;
 
-import com.deutscheboerse.risk.dave.HttpVerticle;
+import com.deutscheboerse.risk.dave.ApiVerticle;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -34,32 +34,32 @@ public class StoreApi {
 
     private void doStore(RoutingContext routingContext) {
         switch(routingContext.request().getParam("model")) {
-            case HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
                 AccountMarginModel accountMarginModel = new AccountMarginModel(routingContext.getBodyAsJson());
                 accountMarginModel.validate();
                 this.persistenceProxy.storeAccountMargin(accountMarginModel, this.getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
                 LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(routingContext.getBodyAsJson());
                 liquiGroupMarginModel.validate();
                 this.persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, this.getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
                 LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(routingContext.getBodyAsJson());
                 liquiGroupSplitMarginModel.validate();
                 this.persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, this.getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.POOL_MARGIN_REQUEST_PARAMETER:
                 PoolMarginModel poolMarginModel = new PoolMarginModel(routingContext.getBodyAsJson());
                 poolMarginModel.validate();
                 this.persistenceProxy.storePoolMargin(poolMarginModel, this.getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER:
+            case ApiVerticle.POSITION_REPORT_REQUEST_PARAMETER:
                 PositionReportModel positionReportModel = new PositionReportModel(routingContext.getBodyAsJson());
                 positionReportModel.validate();
                 this.persistenceProxy.storePositionReport(positionReportModel, this.getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
+            case ApiVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
                 RiskLimitUtilizationModel riskLimitUtilizationModel = new RiskLimitUtilizationModel(routingContext.getBodyAsJson());
                 riskLimitUtilizationModel.validate();
                 this.persistenceProxy.storeRiskLimitUtilization(riskLimitUtilizationModel, this.getResponseHandler(routingContext));

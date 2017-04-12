@@ -1,6 +1,5 @@
 package com.deutscheboerse.risk.dave.utils;
 
-import com.deutscheboerse.risk.dave.BaseTest;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -16,7 +15,7 @@ public class RestSenderRegularIgnoreError extends RestSenderRegular {
 
     protected void postModel(String requestURI, JsonObject model, Handler<AsyncResult<Void>> resultHandler) {
         this.httpClient.request(HttpMethod.POST,
-                BaseTest.HTTP_PORT,
+                TestConfig.API_PORT,
                 "localhost",
                 requestURI,
                 response -> response.bodyHandler(body -> resultHandler.handle(Future.succeededFuture())))

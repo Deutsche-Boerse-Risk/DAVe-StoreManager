@@ -4,7 +4,7 @@
  import ch.qos.logback.classic.Logger;
  import ch.qos.logback.classic.spi.ILoggingEvent;
  import ch.qos.logback.core.Appender;
- import com.deutscheboerse.risk.dave.BaseTest;
+ import com.deutscheboerse.risk.dave.utils.TestConfig;
  import com.deutscheboerse.risk.dave.log.TestAppender;
  import com.deutscheboerse.risk.dave.model.*;
  import com.deutscheboerse.risk.dave.utils.DataHelper;
@@ -28,7 +28,7 @@
  import java.util.function.BiConsumer;
 
 @RunWith(VertxUnitRunner.class)
-public class MongoPersistenceServiceIT extends BaseTest {
+public class MongoPersistenceServiceIT {
     private static final TestAppender testAppender = TestAppender.getAppender(MongoPersistenceService.class);
     private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     private static Vertx vertx;
@@ -38,8 +38,8 @@ public class MongoPersistenceServiceIT extends BaseTest {
     @BeforeClass
     public static void setUp(TestContext context) {
         MongoPersistenceServiceIT.vertx = Vertx.vertx();
-        JsonObject config = BaseTest.getMongoConfig();
-        JsonObject mongoConfig = BaseTest.getMongoClientConfig(config);
+        JsonObject config = TestConfig.getMongoConfig();
+        JsonObject mongoConfig = TestConfig.getMongoClientConfig(config);
 
         MongoPersistenceServiceIT.mongoClient = MongoClient.createShared(MongoPersistenceServiceIT.vertx, mongoConfig);
 

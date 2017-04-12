@@ -19,9 +19,9 @@ import java.util.Map;
 public class MainVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
     private static final String MONGO_CONF_KEY = "mongo";
-    private static final String HTTP_CONF_KEY = "http";
+    private static final String API_CONF_KEY = "api";
     private static final String HEALTHCHECK_CONF_KEY = "healthCheck";
-    private static final int HTTP_VERTICLE_INSTANCES = 5;
+    private static final int API_VERTICLE_INSTANCES = 5;
     private JsonObject configuration;
     private Map<String, String> verticleDeployments = new HashMap<>();
 
@@ -30,7 +30,7 @@ public class MainVerticle extends AbstractVerticle {
         Future<Void> chainFuture = Future.future();
         this.retrieveConfig()
                 .compose(i -> deployPersistenceVerticle())
-                .compose(i -> deployHttpVerticle())
+                .compose(i -> deployApiVerticle())
                 .compose(i -> deployHealthCheckVerticle())
                 .compose(chainFuture::complete, chainFuture);
 
@@ -85,8 +85,8 @@ public class MainVerticle extends AbstractVerticle {
                 new JsonObject()).put("guice_binder", this.configuration.getString("guice_binder", PersistenceVerticleBinder.class.getName())), 1);
     }
 
-    private Future<Void> deployHttpVerticle() {
-        return this.deployVerticle(HttpVerticle.class, this.configuration.getJsonObject(HTTP_CONF_KEY, new JsonObject()), HTTP_VERTICLE_INSTANCES);
+    private Future<Void> deployApiVerticle() {
+        return this.deployVerticle(ApiVerticle.class, this.configuration.getJsonObject(API_CONF_KEY, new JsonObject()), API_VERTICLE_INSTANCES);
     }
 
     private Future<Void> deployHealthCheckVerticle() {

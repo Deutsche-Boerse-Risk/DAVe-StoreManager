@@ -9,7 +9,7 @@
     </layout>
   </appender>
 
-  <root level="${DAVE_LOG_LEVEL}">
+  <root level="${LOG_LEVEL}">
     <appender-ref ref="STDOUT" />
   </root>
 
