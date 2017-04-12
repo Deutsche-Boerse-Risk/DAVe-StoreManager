@@ -64,7 +64,7 @@
                     <version>${surefire.maven.plugin.version}</version>
                     <configuration>
                         <systemPropertyVariables>
-                            <http.port>${http.port}</http.port>
+                            <api.port>${api.port}</api.port>
                             <healthcheck.port>${healthcheck.port}</healthcheck.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
@@ -77,7 +77,7 @@
                     <version>${failsafe.maven.plugin.version}</version>
                     <configuration>
                         <systemPropertyVariables>
-                            <http.port>${http.port}</http.port>
+                            <api.port>${api.port}</api.port>
                             <healthcheck.port>${healthcheck.port}</healthcheck.port>
                             <mongodb.port>${mongodb.port}</mongodb.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
@@ -156,7 +156,7 @@
                         <phase>process-sources</phase>
                         <configuration>
                             <portNames>
-                                <portName>http.port</portName>
+                                <portName>api.port</portName>
                                 <portName>healthcheck.port</portName>
                             </portNames>
                           </configuration>

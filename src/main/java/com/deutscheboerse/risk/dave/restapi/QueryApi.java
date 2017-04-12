@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.restapi;
 
-import com.deutscheboerse.risk.dave.HttpVerticle;
+import com.deutscheboerse.risk.dave.ApiVerticle;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import com.deutscheboerse.risk.dave.persistence.RequestType;
@@ -49,27 +49,27 @@ public class QueryApi {
 
     private void queryHandler(RoutingContext routingContext, RequestType requestType) {
         switch(routingContext.request().getParam("model")) {
-            case HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
                 AccountMarginModel accountMarginModel = new AccountMarginModel();
                 this.persistenceProxy.queryAccountMargin(requestType, this.createParamsFromContext(routingContext, accountMarginModel), getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
                 LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel();
                 this.persistenceProxy.queryLiquiGroupMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupMarginModel), getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
                 LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel();
                 this.persistenceProxy.queryLiquiGroupSplitMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupSplitMarginModel), getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER:
+            case ApiVerticle.POOL_MARGIN_REQUEST_PARAMETER:
                 PoolMarginModel poolMarginModel = new PoolMarginModel();
                 this.persistenceProxy.queryPoolMargin(requestType, this.createParamsFromContext(routingContext, poolMarginModel), getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER:
+            case ApiVerticle.POSITION_REPORT_REQUEST_PARAMETER:
                 PositionReportModel positionReportModel = new PositionReportModel();
                 this.persistenceProxy.queryPositionReport(requestType, this.createParamsFromContext(routingContext, positionReportModel), getResponseHandler(routingContext));
                 break;
-            case HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
+            case ApiVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
                 RiskLimitUtilizationModel riskLimitUtilizationModel = new RiskLimitUtilizationModel();
                 this.persistenceProxy.queryRiskLimitUtilization(requestType, this.createParamsFromContext(routingContext, riskLimitUtilizationModel), getResponseHandler(routingContext));
                 break;

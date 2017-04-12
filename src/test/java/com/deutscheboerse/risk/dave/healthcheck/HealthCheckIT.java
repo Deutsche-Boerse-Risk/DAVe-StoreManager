@@ -1,12 +1,12 @@
 package com.deutscheboerse.risk.dave.healthcheck;
 
-import com.deutscheboerse.risk.dave.BaseTest;
-import com.deutscheboerse.risk.dave.HttpVerticle;
+import com.deutscheboerse.risk.dave.HealthCheckVerticle;
+import com.deutscheboerse.risk.dave.utils.TestConfig;
+import com.deutscheboerse.risk.dave.ApiVerticle;
 import com.deutscheboerse.risk.dave.MainVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
-public class HealthCheckIT extends BaseTest {
+public class HealthCheckIT {
 
     private static Vertx vertx;
 
@@ -27,7 +27,7 @@ public class HealthCheckIT extends BaseTest {
     public static void setUp(TestContext context) {
         vertx = Vertx.vertx();
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(BaseTest.getGlobalConfig());
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getGlobalConfig());
         vertx.deployVerticle(MainVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess());
     }
 
@@ -53,7 +53,7 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "healthz")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_HEALTHZ,
+        vertx.createHttpClient().getNow(TestConfig.HEALTHCHECK_PORT, "localhost", HealthCheckVerticle.REST_HEALTHZ,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -64,7 +64,7 @@ public class HealthCheckIT extends BaseTest {
                 .put("id", "readiness")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_READINESS,
+        vertx.createHttpClient().getNow(TestConfig.HEALTHCHECK_PORT, "localhost", ApiVerticle.REST_READINESS,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
@@ -79,7 +79,7 @@ public class HealthCheckIT extends BaseTest {
         HealthCheck healthCheck = new HealthCheck(vertx);
         healthCheck.setComponentFailed(HealthCheck.Component.PERSISTENCE_SERVICE);
 
-        vertx.createHttpClient().getNow(HEALTHCHECK_PORT, "localhost", HttpVerticle.REST_READINESS,
+        vertx.createHttpClient().getNow(TestConfig.HEALTHCHECK_PORT, "localhost", HealthCheckVerticle.REST_READINESS,
                 assertEqualsHttpHandler(503, expected.encode(), context));
     }
 

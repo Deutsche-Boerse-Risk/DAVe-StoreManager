@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.utils;
 
-import com.deutscheboerse.risk.dave.BaseTest;
-import com.deutscheboerse.risk.dave.HttpVerticle;
+import com.deutscheboerse.risk.dave.ApiVerticle;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpClient;
@@ -20,22 +19,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RestSenderRegular extends BaseTest  implements RestSender {
+public class RestSenderRegular implements RestSender {
     private static final Logger LOG = LoggerFactory.getLogger(RestSenderRegular.class);
 
-    private static final String STORE_ACCOUNT_MARGIN_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER);
-    private static final String STORE_LIQUI_GROUP_MARGIN_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER);
-    private static final String STORE_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER);
-    private static final String STORE_POOL_MARGIN_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.POOL_MARGIN_REQUEST_PARAMETER);
-    private static final String STORE_POSITION_REPORT_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.POSITION_REPORT_REQUEST_PARAMETER);
-    private static final String STORE_RISK_LIMIT_UTILIZATION_API = String.format("%s/store/%s", HttpVerticle.API_PREFIX, HttpVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER);
+    private static final String STORE_ACCOUNT_MARGIN_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER);
+    private static final String STORE_LIQUI_GROUP_MARGIN_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER);
+    private static final String STORE_LIQUI_GROUP_SPLIT_MARGIN_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER);
+    private static final String STORE_POOL_MARGIN_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.POOL_MARGIN_REQUEST_PARAMETER);
+    private static final String STORE_POSITION_REPORT_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.POSITION_REPORT_REQUEST_PARAMETER);
+    private static final String STORE_RISK_LIMIT_UTILIZATION_API = String.format("%s/store/%s", ApiVerticle.API_PREFIX, ApiVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER);
 
     private final Vertx vertx;
     final HttpClient httpClient;
 
     public RestSenderRegular(Vertx vertx) {
         this.vertx = vertx;
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(BaseTest.HTTP_SERVER_CERTIFICATE.trustOptions());
+        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
         this.httpClient = this.vertx.createHttpClient(httpClientOptions);
     }
 
@@ -132,7 +131,7 @@ public class RestSenderRegular extends BaseTest  implements RestSender {
 
     protected void postModel(String requestURI, JsonObject model, Handler<AsyncResult<Void>> resultHandler) {
         this.httpClient.request(HttpMethod.POST,
-                BaseTest.HTTP_PORT,
+                TestConfig.API_PORT,
                 "localhost",
                 requestURI,
                 response -> {

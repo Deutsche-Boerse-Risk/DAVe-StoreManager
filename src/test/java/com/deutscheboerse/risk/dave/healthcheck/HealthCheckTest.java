@@ -41,7 +41,7 @@ public class HealthCheckTest {
         Vertx vertx = Vertx.vertx();
 
         HealthCheck healthCheck = new HealthCheck(vertx)
-                .setComponentReady(Component.HTTP);
+                .setComponentReady(Component.API);
         context.assertFalse(healthCheck.ready(), "Only some verticles are ready, should return false");
 
         vertx.close();
@@ -52,7 +52,7 @@ public class HealthCheckTest {
         Vertx vertx = Vertx.vertx();
 
         HealthCheck healthCheck = new HealthCheck(vertx)
-                .setComponentReady(Component.HTTP)
+                .setComponentReady(Component.API)
                 .setComponentReady(Component.PERSISTENCE_SERVICE);
 
         context.assertTrue(healthCheck.ready(), "All verticles are ready, the whole app should be ready");

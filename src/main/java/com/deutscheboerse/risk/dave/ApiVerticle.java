@@ -18,10 +18,12 @@ import io.vertx.core.net.PemTrustOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
-import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.HTTP;
+import java.util.stream.Collectors;
 
-public class HttpVerticle extends AbstractVerticle {
-    private static final Logger LOG = LoggerFactory.getLogger(HttpVerticle.class);
+import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.API;
+
+public class ApiVerticle extends AbstractVerticle {
+    private static final Logger LOG = LoggerFactory.getLogger(ApiVerticle.class);
 
     private static final Integer DEFAULT_PORT = 8080;
     private static final Boolean DEFAULT_SSL_REQUIRE_CLIENT_AUTH = false;
@@ -36,41 +38,45 @@ public class HttpVerticle extends AbstractVerticle {
     public static final String POSITION_REPORT_REQUEST_PARAMETER = "pr";
     public static final String RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER = "rlu";
 
-    public static final String REST_HEALTHZ = "/healthz";
     public static final String REST_READINESS = "/readiness";
 
+    private static final String HIDDEN_CERTIFICATE = "******************";
+
     private HttpServer server;
-    private HealthCheck healthCheck;
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        JsonObject configWithoutSensitiveInfo = config().copy()
-                .put("sslKey", "******************")
-                .put("sslCert", "******************");
-        JsonArray trustCertsWithoutSensitiveInfo = new JsonArray();
-        config().getJsonArray("sslTrustCerts").forEach(key -> trustCertsWithoutSensitiveInfo.add("******************"));
-        configWithoutSensitiveInfo.put("sslTrustCerts",trustCertsWithoutSensitiveInfo);
-        LOG.info("Starting {} with configuration: {}", HttpVerticle.class.getSimpleName(), configWithoutSensitiveInfo.encodePrettily());
+        LOG.info("Starting {} with configuration: {}", ApiVerticle.class.getSimpleName(), hideCertificates(config()).encodePrettily());
 
-        healthCheck = new HealthCheck(this.vertx);
+        HealthCheck healthCheck = new HealthCheck(this.vertx);
 
         startHttpServer().setHandler(ar -> {
             if (ar.succeeded()) {
-                healthCheck.setComponentReady(HTTP);
+                healthCheck.setComponentReady(API);
                 startFuture.complete();
             }
             else {
-                healthCheck.setComponentFailed(HTTP);
+                healthCheck.setComponentFailed(API);
                 startFuture.fail(ar.cause());
             }
         });
+    }
+
+    private JsonObject hideCertificates(JsonObject config) {
+        return config.copy()
+                .put("sslKey", HIDDEN_CERTIFICATE)
+                .put("sslCert", HIDDEN_CERTIFICATE)
+                .put("sslTrustCerts", new JsonArray(
+                        config.getJsonArray("sslTrustCerts").stream()
+                                .map(i -> HIDDEN_CERTIFICATE).collect(Collectors.toList()))
+                );
     }
 
     private Future<HttpServer> startHttpServer() {
         Future<HttpServer> webServerFuture = Future.future();
         Router router = configureRouter();
 
-        int port = config().getInteger("port", HttpVerticle.DEFAULT_PORT);
+        int port = config().getInteger("port", ApiVerticle.DEFAULT_PORT);
 
         LOG.info("Starting web server on port {}", port);
         HttpServerOptions httpServerOptions = this.createHttpServerOptions();

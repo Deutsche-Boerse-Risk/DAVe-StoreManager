@@ -18,7 +18,7 @@ public class HealthCheck {
     private static final String MAP_NAME = "healthCheck";
 
     public enum Component {
-        HTTP,
+        API,
         PERSISTENCE_SERVICE
     }
 
