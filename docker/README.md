@@ -1,6 +1,6 @@
 # DAVe Store Manager Docker image
 
-**DAVe Store Manager** docker image allows DAVe Store Manager to be executed in Docker / Kubernetes. It contains an entrypoint which will take care of the configuration based on environment variables. The different options are described below.
+**DAVe Store Manager** docker image allows DAVe Store Manager to be executed in Docker / Kubernetes. The different options, provided via environment variables, are described below.
 
 ## Examples
 
@@ -32,8 +32,8 @@ Allows to configure logging parameters. Supported log levels are `off`, `error`,
 
 | Option | Explanation | Example |
 |--------|-------------|---------|
-| `DAVE_MONGO_DB` | Name of the database which will be used | `DAVe` |
-| `DAVE_MONGO_CONNECTION_URL` | Connection URL for Mongo database. | `mongodb://localhost:27017/?waitqueuemultiple=20000` |
+| `MONGO_DB` | Name of the database which will be used | `DAVe` |
+| `MONGO_CONNECTION_URL` | Connection URL for Mongo database. | `mongodb://localhost:27017/?waitqueuemultiple=20000` |
 
 ### HTTP Server
 

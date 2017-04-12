@@ -50,6 +50,9 @@ The REST API provides two endpoints for checking the state using HTTP GET method
 
 ## Run
 
-Use script `start.sh|bat` to start the application depending on your operating system (Linux,MacOS | Windows).
+Use script `start.sh` to start the application.
+
+### Docker image to run standalone API
+[DAVe-API Docker image](docker)
 
 
