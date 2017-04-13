@@ -5,7 +5,7 @@ COPY ./dave-store-manager-1.0-SNAPSHOT /home/dave
 
 ENV DAVE_VERSION 1.0-SNAPSHOT
 
-ENV JAVA_OPTS -Xmx=512m
+ENV JAVA_OPTS -Xmx512m
 
 RUN chown -R dave:dave /home/dave
 WORKDIR /home/dave
