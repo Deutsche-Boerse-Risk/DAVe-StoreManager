@@ -1,5 +1,8 @@
 package com.deutscheboerse.risk.dave;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import com.deutscheboerse.risk.dave.log.TestAppender;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.utils.TestConfig;
@@ -17,12 +20,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleIT {
+    private static final TestAppender testAppender = TestAppender.getAppender(MainVerticle.class);
+    private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+
     private Vertx vertx;
     private static int ACCOUNT_MARGIN_COUNT = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1);
     private static int LIQUI_GROUP_MARGIN_COUNT = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1);
@@ -34,6 +41,7 @@ public class MainVerticleIT {
     @Before
     public void setUp() {
         this.vertx = Vertx.vertx();
+        rootLogger.addAppender(testAppender);
     }
 
     private MongoClient createMongoClient(JsonObject mongoVerticleConfig) {
@@ -89,6 +97,25 @@ public class MainVerticleIT {
 //    }
 
     @Test
+    public void testImplicitTypeConversion(TestContext context) throws InterruptedException {
+        DeploymentOptions options = createDeploymentOptions();
+
+        options.getConfig()
+                .getJsonObject("api", new JsonObject())
+                .put("port", String.valueOf(TestConfig.API_PORT))
+                .put("sslRequireClientAuth", "false");
+
+        Level rootLevel = rootLogger.getLevel();
+        rootLogger.setLevel(Level.DEBUG);
+        testAppender.start();
+        vertx.deployVerticle(MainVerticle.class.getName(), options, context.asyncAssertSuccess());
+        testAppender.waitForMessageContains(Level.DEBUG, "\"port\" : " + String.valueOf(TestConfig.API_PORT));
+        testAppender.waitForMessageContains(Level.DEBUG, "\"sslRequireClientAuth\" : false");
+        testAppender.stop();
+        rootLogger.setLevel(rootLevel);
+    }
+
+    @Test
     public void testFailedDeploymentWrongConfig(TestContext context) {
         Async mainVerticleAsync = context.async();
         DeploymentOptions options = createDeploymentOptions();
@@ -137,6 +164,7 @@ public class MainVerticleIT {
 
     @After
     public void cleanup(TestContext context) {
+        rootLogger.detachAppender(testAppender);
         vertx.close(context.asyncAssertSuccess());
     }
 }
