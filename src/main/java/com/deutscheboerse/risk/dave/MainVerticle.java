@@ -65,7 +65,7 @@ public class MainVerticle extends AbstractVerticle {
         json.forEach(entry -> {
             Object value = entry.getValue();
             if (value instanceof String) {
-                String s = (String)value;
+                String s = ((String) value).toLowerCase();
                 if (s.matches("^-?\\d+$")) {
                     json.put(entry.getKey(), Integer.valueOf(s));
                 } else if (s.matches("^(true)|(false)$")) {
