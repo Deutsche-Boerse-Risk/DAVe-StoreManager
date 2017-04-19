@@ -61,23 +61,6 @@ public class MainVerticle extends AbstractVerticle {
         options.addStore(new ConfigStoreOptions().setType("json").setConfig(vertx.getOrCreateContext().config()));
     }
 
-    private static JsonObject implicitConfigTypeConversion(JsonObject json) {
-        json.forEach(entry -> {
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                String s = ((String) value).toLowerCase();
-                if (s.matches("^-?\\d+$")) {
-                    json.put(entry.getKey(), Integer.valueOf(s));
-                } else if (s.matches("^(true)|(false)$")) {
-                    json.put(entry.getKey(), Boolean.valueOf(s));
-                }
-            } else if (value instanceof JsonObject) {
-                implicitConfigTypeConversion(json.getJsonObject(entry.getKey()));
-            }
-        });
-        return json;
-    }
-
     private Future<Void> retrieveConfig() {
         Future<Void> future = Future.future();
         ConfigRetrieverOptions options = new ConfigRetrieverOptions();
@@ -86,7 +69,7 @@ public class MainVerticle extends AbstractVerticle {
         ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
         retriever.getConfig(ar -> {
             if (ar.succeeded()) {
-                this.configuration = implicitConfigTypeConversion(ar.result());
+                this.configuration = ar.result();
                 LOG.debug("Retrieved configuration: {}", this.configuration.encodePrettily());
                 future.complete();
             } else {
