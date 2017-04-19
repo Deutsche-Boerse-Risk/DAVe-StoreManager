@@ -1,8 +1,10 @@
 package com.deutscheboerse.risk.dave;
 
+import com.deutscheboerse.risk.dave.config.ApiConfig;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.restapi.QueryApi;
 import com.deutscheboerse.risk.dave.restapi.StoreApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
@@ -18,15 +20,13 @@ import io.vertx.core.net.PemTrustOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.API;
 
 public class ApiVerticle extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(ApiVerticle.class);
-
-    private static final Integer DEFAULT_PORT = 8080;
-    private static final Boolean DEFAULT_SSL_REQUIRE_CLIENT_AUTH = false;
 
     private static final String API_VERSION = "v1.0";
     public static final String API_PREFIX = String.format("/api/%s", API_VERSION);
@@ -43,10 +43,13 @@ public class ApiVerticle extends AbstractVerticle {
     private static final String HIDDEN_CERTIFICATE = "******************";
 
     private HttpServer server;
+    private ApiConfig config;
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         LOG.info("Starting {} with configuration: {}", ApiVerticle.class.getSimpleName(), hideCertificates(config()).encodePrettily());
+
+        config = (new ObjectMapper()).readValue(config().toString(), ApiConfig.class);
 
         HealthCheck healthCheck = new HealthCheck(this.vertx);
 
@@ -76,7 +79,7 @@ public class ApiVerticle extends AbstractVerticle {
         Future<HttpServer> webServerFuture = Future.future();
         Router router = configureRouter();
 
-        int port = config().getInteger("port", ApiVerticle.DEFAULT_PORT);
+        int port = config.getPort();
 
         LOG.info("Starting web server on port {}", port);
         HttpServerOptions httpServerOptions = this.createHttpServerOptions();
@@ -96,18 +99,17 @@ public class ApiVerticle extends AbstractVerticle {
     private void setSSL(HttpServerOptions httpServerOptions) {
         httpServerOptions.setSsl(true);
         PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
-                .setKeyValue(Buffer.buffer(config().getString("sslKey")))
-                .setCertValue(Buffer.buffer(config().getString("sslCert")));
+                .setKeyValue(Buffer.buffer(config.getSslKey()))
+                .setCertValue(Buffer.buffer(config.getSslCert()));
         httpServerOptions.setPemKeyCertOptions(pemKeyCertOptions);
 
         PemTrustOptions pemTrustOptions = new PemTrustOptions();
-        config().getJsonArray("sslTrustCerts", new JsonArray())
-                .stream()
+        Arrays.stream(config.getSslTrustCerts())
                 .map(Object::toString)
                 .forEach(trustKey -> pemTrustOptions.addCertValue(Buffer.buffer(trustKey)));
         if (!pemTrustOptions.getCertValues().isEmpty()) {
             httpServerOptions.setPemTrustOptions(pemTrustOptions);
-            ClientAuth clientAuth = config().getBoolean("sslRequireClientAuth", DEFAULT_SSL_REQUIRE_CLIENT_AUTH) ?
+            ClientAuth clientAuth = config.isSslRequireClientAuth() ?
                     ClientAuth.REQUIRED : ClientAuth.REQUEST;
             httpServerOptions.setClientAuth(clientAuth);
         }

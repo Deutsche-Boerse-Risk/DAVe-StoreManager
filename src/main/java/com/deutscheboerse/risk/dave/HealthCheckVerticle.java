@@ -1,6 +1,8 @@
 package com.deutscheboerse.risk.dave;
 
+import com.deutscheboerse.risk.dave.config.HealthCheckConfig;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
@@ -27,14 +29,15 @@ public class HealthCheckVerticle extends AbstractVerticle
     public static final String REST_HEALTHZ = "/healthz";
     public static final String REST_READINESS = "/readiness";
 
-    private static final Integer DEFAULT_PORT = 8080;
-
     private HttpServer server;
     private HealthCheck healthCheck;
+    private HealthCheckConfig config;
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         LOG.info("Starting {} with configuration: {}", HealthCheckVerticle.class.getSimpleName(), config().encodePrettily());
+
+        config = (new ObjectMapper()).readValue(config().toString(), HealthCheckConfig.class);
 
         healthCheck = new HealthCheck(this.vertx);
 
@@ -52,7 +55,7 @@ public class HealthCheckVerticle extends AbstractVerticle
         Future<HttpServer> webServerFuture = Future.future();
         Router router = configureRouter();
 
-        int port = config().getInteger("port", HealthCheckVerticle.DEFAULT_PORT);
+        int port = config.getPort();
 
         LOG.info("Starting HealthCheck web server on port {}", port);
         server = vertx.createHttpServer()

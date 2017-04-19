@@ -1,18 +1,21 @@
 package com.deutscheboerse.risk.dave;
 
+import com.deutscheboerse.risk.dave.config.MongoConfig;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.mongo.MongoClient;
 
 import javax.inject.Singleton;
+import java.io.IOException;
 
 public class PersistenceVerticleBinder extends AbstractModule {
-
-    private static final String DEFAULT_DB_NAME = "DAVe";
-    private static final String DEFAULT_CONNECTION_URL = "mongodb://localhost:27017/?waitqueuemultiple=20000";
+    private static final Logger LOG = LoggerFactory.getLogger(PersistenceVerticleBinder.class);
 
     @Override
     protected void configure() {
@@ -21,15 +24,22 @@ public class PersistenceVerticleBinder extends AbstractModule {
     }
 
     private void bindMongoClient() {
-        JsonObject globalMongoConfig = Vertx.currentContext().config();
-        JsonObject mongoConfig = new JsonObject();
+        try {
+            MongoConfig mongoConfig = (new ObjectMapper()).readValue(Vertx.currentContext().config().toString(), MongoConfig.class);
 
-        mongoConfig.put("db_name", globalMongoConfig.getString("dbName", DEFAULT_DB_NAME));
-        mongoConfig.put("useObjectId", true);
-        mongoConfig.put("connection_string", globalMongoConfig.getString("connectionUrl", DEFAULT_CONNECTION_URL));
-        MongoClient mongo = MongoClient.createShared(Vertx.currentContext().owner(), mongoConfig);
+            LOG.debug("Using binder {}", mongoConfig.getGuice_binder());
 
-        bind(MongoClient.class).toInstance(mongo);
+            JsonObject jsonConfig = new JsonObject();
+
+            jsonConfig.put("db_name", mongoConfig.getDbName());
+            jsonConfig.put("useObjectId", true);
+            jsonConfig.put("connection_string", mongoConfig.getConnectionUrl());
+            MongoClient mongo = MongoClient.createShared(Vertx.currentContext().owner(), jsonConfig);
+
+            bind(MongoClient.class).toInstance(mongo);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     private void bindPersistenceService() {
