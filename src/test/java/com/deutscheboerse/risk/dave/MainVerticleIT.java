@@ -1,14 +1,13 @@
 package com.deutscheboerse.risk.dave;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.deutscheboerse.risk.dave.log.TestAppender;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
-import com.deutscheboerse.risk.dave.utils.TestConfig;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import com.deutscheboerse.risk.dave.utils.RestSender;
 import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
+import com.deutscheboerse.risk.dave.utils.TestConfig;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -95,25 +94,6 @@ public class MainVerticleIT {
 //        ));
 //
 //    }
-
-    @Test
-    public void testImplicitTypeConversion(TestContext context) throws InterruptedException {
-        DeploymentOptions options = createDeploymentOptions();
-
-        options.getConfig()
-                .getJsonObject("api", new JsonObject())
-                .put("port", String.valueOf(TestConfig.API_PORT))
-                .put("sslRequireClientAuth", "false");
-
-        Level rootLevel = rootLogger.getLevel();
-        rootLogger.setLevel(Level.DEBUG);
-        testAppender.start();
-        vertx.deployVerticle(MainVerticle.class.getName(), options, context.asyncAssertSuccess());
-        testAppender.waitForMessageContains(Level.DEBUG, "\"port\" : " + String.valueOf(TestConfig.API_PORT));
-        testAppender.waitForMessageContains(Level.DEBUG, "\"sslRequireClientAuth\" : false");
-        testAppender.stop();
-        rootLogger.setLevel(rootLevel);
-    }
 
     @Test
     public void testFailedDeploymentWrongConfig(TestContext context) {

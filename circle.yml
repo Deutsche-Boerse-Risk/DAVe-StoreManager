@@ -20,8 +20,10 @@ deployment:
     branch: master
     commands:
       - ./docker/create_docker.sh
-  demo:
-    branch: demo
+      - ./deployment/kube_deploy.sh
+  dave20:
+    branch: dave20
     commands:
       - ./docker/create_docker.sh
+      - ./deployment/kube_deploy.sh
       
