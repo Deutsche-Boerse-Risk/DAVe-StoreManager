@@ -8,7 +8,6 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -114,8 +113,7 @@ public class RestSenderRegular implements RestSender {
 
     private void sendModels(String requestURI, String folderName, int ttsaveNo, Handler<AsyncResult<Void>> resultHandler) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        JsonArray models = new JsonArray();
-        DataHelper.readTTSaveFile(folderName, ttsaveNo).forEach(models::add);
+        JsonArray models = new JsonArray(DataHelper.readTTSaveFile(folderName, ttsaveNo));
         this.postModels(requestURI, models, ar -> {
             if (ar.succeeded()) {
                 countDownLatch.countDown();

@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ public class DataHelper {
                 .forEach(json -> consumer.accept((JsonObject) json));
     }
 
-    public static Collection<JsonObject> readTTSaveFile(String folderName, int ttsaveNo) {
+    public static List<JsonObject> readTTSaveFile(String folderName, int ttsaveNo) {
         return getJsonArrayFromTTSaveFile(folderName, ttsaveNo)
                 .orElse(new JsonArray())
                 .stream()
