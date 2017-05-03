@@ -7,6 +7,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -112,12 +113,14 @@ public class RestSenderRegular implements RestSender {
     }
 
     private void sendModels(String requestURI, String folderName, int ttsaveNo, Handler<AsyncResult<Void>> resultHandler) {
-        CountDownLatch countDownLatch = new CountDownLatch(DataHelper.getJsonObjectCount(folderName, ttsaveNo));
-        DataHelper.readTTSaveFile(folderName, ttsaveNo, model -> this.postModel(requestURI, model, ar -> {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        JsonArray models = new JsonArray();
+        DataHelper.readTTSaveFile(folderName, ttsaveNo).forEach(models::add);
+        this.postModels(requestURI, models, ar -> {
             if (ar.succeeded()) {
                 countDownLatch.countDown();
             }
-        }));
+        });
         try {
             if (countDownLatch.await(30, TimeUnit.SECONDS)) {
                 resultHandler.handle(Future.succeededFuture());
@@ -129,7 +132,7 @@ public class RestSenderRegular implements RestSender {
         }
     }
 
-    protected void postModel(String requestURI, JsonObject model, Handler<AsyncResult<Void>> resultHandler) {
+    protected void postModels(String requestURI, JsonArray models, Handler<AsyncResult<Void>> resultHandler) {
         this.httpClient.request(HttpMethod.POST,
                 TestConfig.API_PORT,
                 "localhost",
@@ -143,6 +146,6 @@ public class RestSenderRegular implements RestSender {
                     }
                 })
                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                .end(model.encode());
+                .end(models.encode());
     }
 }

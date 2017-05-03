@@ -7,6 +7,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.serviceproxy.ServiceException;
 
+import java.util.List;
+
 public class InitPersistenceService implements PersistenceService {
     private final boolean succeeds;
     private boolean initialized = false;
@@ -27,32 +29,32 @@ public class InitPersistenceService implements PersistenceService {
     }
 
     @Override
-    public void storeAccountMargin(AccountMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storeAccountMargin(List<AccountMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 
     @Override
-    public void storeLiquiGroupMargin(LiquiGroupMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storeLiquiGroupMargin(List<LiquiGroupMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 
     @Override
-    public void storeLiquiGroupSplitMargin(LiquiGroupSplitMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storeLiquiGroupSplitMargin(List<LiquiGroupSplitMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 
     @Override
-    public void storePoolMargin(PoolMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storePoolMargin(List<PoolMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 
     @Override
-    public void storePositionReport(PositionReportModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storePositionReport(List<PositionReportModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 
     @Override
-    public void storeRiskLimitUtilization(RiskLimitUtilizationModel model, Handler<AsyncResult<Void>> resultHandler) {
+    public void storeRiskLimitUtilization(List<RiskLimitUtilizationModel> models, Handler<AsyncResult<Void>> resultHandler) {
         resultHandler.handle(ServiceException.fail(STORE_ERROR, "Store not implemented"));
     }
 

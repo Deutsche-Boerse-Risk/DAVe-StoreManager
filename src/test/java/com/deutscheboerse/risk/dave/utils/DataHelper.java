@@ -45,7 +45,7 @@ public class DataHelper {
                 .forEach(json -> consumer.accept((JsonObject) json));
     }
 
-    static Collection<JsonObject> readTTSaveFile(String folderName, int ttsaveNo) {
+    public static Collection<JsonObject> readTTSaveFile(String folderName, int ttsaveNo) {
         return getJsonArrayFromTTSaveFile(folderName, ttsaveNo)
                 .orElse(new JsonArray())
                 .stream()

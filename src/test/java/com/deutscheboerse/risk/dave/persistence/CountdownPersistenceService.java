@@ -8,6 +8,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.serviceproxy.ServiceException;
 
+import java.util.List;
+
 public class CountdownPersistenceService implements PersistenceService {
 
     private final Async async;
@@ -22,33 +24,33 @@ public class CountdownPersistenceService implements PersistenceService {
     }
 
     @Override
-    public void storeAccountMargin(AccountMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storeAccountMargin(List<AccountMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
-    public void storeLiquiGroupMargin(LiquiGroupMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storeLiquiGroupMargin(List<LiquiGroupMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
-    public void storeLiquiGroupSplitMargin(LiquiGroupSplitMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storeLiquiGroupSplitMargin(List<LiquiGroupSplitMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
-    public void storePoolMargin(PoolMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storePoolMargin(List<PoolMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
-    public void storePositionReport(PositionReportModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storePositionReport(List<PositionReportModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
-    public void storeRiskLimitUtilization(RiskLimitUtilizationModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(resultHandler);
+    public void storeRiskLimitUtilization(List<RiskLimitUtilizationModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models.size(), resultHandler);
     }
 
     @Override
@@ -85,9 +87,11 @@ public class CountdownPersistenceService implements PersistenceService {
     public void close() {
     }
 
-    private void store(Handler<AsyncResult<Void>> resultHandler) {
+    private void store(int count, Handler<AsyncResult<Void>> resultHandler) {
 
-        this.async.countDown();
+        for (int i = 0; i < count; i++) {
+            this.async.countDown();
+        }
 
         // Always succeeds
         resultHandler.handle(Future.succeededFuture());

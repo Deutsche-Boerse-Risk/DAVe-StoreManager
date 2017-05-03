@@ -62,20 +62,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreAccountMarginError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendAccountMarginData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendAccountMarginData);
     }
 
     @Test
     public void testStoreAccountMarginMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendAccountMarginData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendAccountMarginData);
     }
 
     @Test
     public void testStoreAccountMarginUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendAccountMarginData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendAccountMarginData);
     }
 
     @Test
@@ -94,20 +91,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreLiquiGroupMarginError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendLiquiGroupMarginData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendLiquiGroupMarginData);
     }
 
     @Test
     public void testStoreLiquiGroupMarginMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendLiquiGroupMarginData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendLiquiGroupMarginData);
     }
 
     @Test
     public void testStoreLiquiGroupMarginUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendLiquiGroupMarginData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendLiquiGroupMarginData);
     }
 
     @Test
@@ -126,20 +120,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreLiquiGroupSplitMarginError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
     }
 
     @Test
     public void testStoreLiquiGroupSplitMarginMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
     }
 
     @Test
     public void testStoreLiquiGroupSplitMarginUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
     }
 
     @Test
@@ -158,20 +149,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStorePoolMarginError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendPoolMarginData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendPoolMarginData);
     }
 
     @Test
     public void testStorePoolMarginMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendPoolMarginData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendPoolMarginData);
     }
 
     @Test
     public void testStorePoolMarginUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendPoolMarginData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendPoolMarginData);
     }
 
     @Test
@@ -190,20 +178,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStorePositionReportError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendPositionReportData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendPositionReportData);
     }
 
     @Test
     public void testStorePositionReportMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendPositionReportData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendPositionReportData);
     }
 
     @Test
     public void testStorePositionReportUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendPositionReportData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendPositionReportData);
     }
 
     @Test
@@ -222,20 +207,17 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreRiskLimitUtilizationError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
+        this.testStoreError(context, 2, "Failed to store the document", new RestSenderRegularIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
     }
 
     @Test
     public void testStoreRiskLimitUtilizationMissingFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
+        this.testStoreError(context, 2, "Missing fields in model:", new RestSenderMissingFieldIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
     }
 
     @Test
     public void testStoreRiskLimitUtilizationUnknownFieldError(TestContext context) throws InterruptedException {
-        int msgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1) + DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2);
-        this.testStoreError(context, msgCount, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
+        this.testStoreError(context, 2, "Unknown fields in model:", new RestSenderUnknownFieldIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
     }
 
     @Test
@@ -416,7 +398,7 @@ public class ApiVerticleTest {
                     async.complete();
                 })
                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                .end(new JsonObject().encode());
+                .end(new JsonArray().encode());
 
         async.awaitSuccess(30000);
     }

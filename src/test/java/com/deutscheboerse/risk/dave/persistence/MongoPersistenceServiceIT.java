@@ -21,13 +21,11 @@
  import org.slf4j.LoggerFactory;
 
  import java.io.IOException;
- import java.util.ArrayList;
- import java.util.List;
- import java.util.Optional;
- import java.util.UUID;
+ import java.util.*;
  import java.util.function.BiConsumer;
+ import java.util.stream.Collectors;
 
-@RunWith(VertxUnitRunner.class)
+ @RunWith(VertxUnitRunner.class)
 public class MongoPersistenceServiceIT {
     private static final TestAppender testAppender = TestAppender.getAppender(MongoPersistenceService.class);
     private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -127,7 +125,7 @@ public class MongoPersistenceServiceIT {
         Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
         rootLogger.detachAppender(stdout);
         testAppender.start();
-        persistenceErrorProxy.storeAccountMargin(model, context.asyncAssertFailure());
+        persistenceErrorProxy.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.INFO, "Back online");
         testAppender.stop();
         rootLogger.addAppender(stdout);
@@ -147,7 +145,7 @@ public class MongoPersistenceServiceIT {
         Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
         rootLogger.detachAppender(stdout);
         testAppender.start();
-        persistenceErrorProxy.storeAccountMargin(model, context.asyncAssertFailure());
+        persistenceErrorProxy.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.ERROR, "Still disconnected");
         testAppender.stop();
         rootLogger.addAppender(stdout);
@@ -176,35 +174,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testAccountMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1, (json) -> {
-            AccountMarginModel accountMarginModel = new AccountMarginModel(json);
-            persistenceProxy.storeAccountMargin(accountMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore1 = context.async(1);
+        List<AccountMarginModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1)
+                .stream()
+                .map(AccountMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeAccountMargin(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore1.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore1.awaitSuccess(30000);
 
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 2, (json) -> {
-            AccountMarginModel accountMarginModel = new AccountMarginModel(json);
-            persistenceProxy.storeAccountMargin(accountMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore2 = context.async(1);
+        List<AccountMarginModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 2)
+                .stream()
+                .map(AccountMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeAccountMargin(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore2.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION, firstMsgCount);
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION, expectedCollectionCount);
         this.checkAccountMarginCollectionQuery(context);
 
         AccountMarginModel firstModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
@@ -221,35 +220,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testLiquiGroupMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1, (json) -> {
-            LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(json);
-            persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore1 = context.async(1);
+        List<LiquiGroupMarginModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1)
+                .stream()
+                .map(LiquiGroupMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeLiquiGroupMargin(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore1.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore1.awaitSuccess(30000);
 
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2, (json) -> {
-            LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(json);
-            persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore2 = context.async(1);
+        List<LiquiGroupMarginModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2)
+                .stream()
+                .map(LiquiGroupMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeLiquiGroupMargin(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore2.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION, firstMsgCount);
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION, expectedCollectionCount);
         this.checkLiquiGroupMarginCollectionQuery(context);
 
         LiquiGroupMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupMarginModel.class, 1);
@@ -266,35 +266,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testLiquiGroupSplitMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1, (json) -> {
-            LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(json);
-            persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore1 = context.async(1);
+        List<LiquiGroupSplitMarginModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1)
+                .stream()
+                .map(LiquiGroupSplitMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeLiquiGroupSplitMargin(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore1.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore1.awaitSuccess(30000);
 
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2, (json) -> {
-            LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(json);
-            persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncStore2 = context.async(1);
+        List<LiquiGroupSplitMarginModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2)
+                .stream()
+                .map(LiquiGroupSplitMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeLiquiGroupSplitMargin(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncStore2.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncStore2.awaitSuccess(30000);
 
-        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, firstMsgCount);
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, expectedCollectionCount);
         this.checkLiquiGroupSplitMarginCollectionQuery(context);
 
         LiquiGroupSplitMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupSplitMarginModel.class, 1);
@@ -311,34 +312,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testPoolMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 1, (json) -> {
-            PoolMarginModel poolMarginModel = new PoolMarginModel(json);
-            persistenceProxy.storePoolMargin(poolMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncFirstSnapshotStore = context.async(1);
+        List<PoolMarginModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 1)
+                .stream()
+                .map(PoolMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storePoolMargin(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncFirstSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncFirstSnapshotStore.awaitSuccess(30000);
 
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 2, (json) -> {
-            PoolMarginModel poolMarginModel = new PoolMarginModel(json);
-            persistenceProxy.storePoolMargin(poolMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncSecondSnapshotStore = context.async(1);
+        List<PoolMarginModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 2)
+                .stream()
+                .map(PoolMarginModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storePoolMargin(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncSecondSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.POOL_MARGIN_COLLECTION, firstMsgCount);
+
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.POOL_MARGIN_COLLECTION, expectedCollectionCount);
         this.checkPoolMarginCollectionQuery(context);
 
         PoolMarginModel firstModel = DataHelper.getLastModelFromFile(PoolMarginModel.class, 1);
@@ -355,33 +358,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testPositionReportStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 1, (json) -> {
-            PositionReportModel positionReportModel = new PositionReportModel(json);
-            persistenceProxy.storePositionReport(positionReportModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncFirstSnapshotStore = context.async(1);
+        List<PositionReportModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 1)
+                .stream()
+                .map(PositionReportModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storePositionReport(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncFirstSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncFirstSnapshotStore.awaitSuccess(30000);
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 2, (json) -> {
-            PositionReportModel positionReportModel = new PositionReportModel(json);
-            persistenceProxy.storePositionReport(positionReportModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+
+        Async asyncSecondSnapshotStore = context.async(1);
+        List<PositionReportModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 2)
+                .stream()
+                .map(PositionReportModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storePositionReport(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncSecondSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.POSITION_REPORT_COLLECTION, firstMsgCount );
+
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.POSITION_REPORT_COLLECTION, expectedCollectionCount );
         this.checkPositionReportCollectionQuery(context);
 
         PositionReportModel firstModel = DataHelper.getLastModelFromFile(PositionReportModel.class, 1);
@@ -398,33 +404,36 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testRiskLimitUtilizationStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1, (json) -> {
-            RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(json);
-            persistenceProxy.storeRiskLimitUtilization(model, ar -> {
-                if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+        Async asyncFirstSnapshotStore = context.async(1);
+        List<RiskLimitUtilizationModel> firstSnapshot = DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1)
+                .stream()
+                .map(RiskLimitUtilizationModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeRiskLimitUtilization(firstSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncFirstSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncFirstSnapshotStore.awaitSuccess(30000);
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2, (json) -> {
-            RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(json);
-            persistenceProxy.storeRiskLimitUtilization(model, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
+
+        Async asyncSecondSnapshotStore = context.async(1);
+        List<RiskLimitUtilizationModel> secondSnapshot = DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2)
+                .stream()
+                .map(RiskLimitUtilizationModel::new)
+                .collect(Collectors.toList());
+        persistenceProxy.storeRiskLimitUtilization(secondSnapshot, ar -> {
+            if (ar.succeeded()) {
+                asyncSecondSnapshotStore.countDown();
+            } else {
+                context.fail(ar.cause());
+            }
         });
         asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION, firstMsgCount);
+
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1);
+        this.checkCountInCollection(context, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION, expectedCollectionCount);
         this.checkRiskLimitUtilizationCollectionQuery(context);
 
         RiskLimitUtilizationModel firstModel = DataHelper.getLastModelFromFile(RiskLimitUtilizationModel.class, 1);
