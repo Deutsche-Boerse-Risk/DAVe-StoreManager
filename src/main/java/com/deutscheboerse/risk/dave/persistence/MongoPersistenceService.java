@@ -65,33 +65,33 @@ public class MongoPersistenceService implements PersistenceService {
     }
 
     @Override
-    public void storeAccountMargin(AccountMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, ACCOUNT_MARGIN_COLLECTION, resultHandler);
+    public void storeAccountMargin(List<AccountMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, ACCOUNT_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
-    public void storeLiquiGroupMargin(LiquiGroupMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, LIQUI_GROUP_MARGIN_COLLECTION, resultHandler);
+    public void storeLiquiGroupMargin(List<LiquiGroupMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, LIQUI_GROUP_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
-    public void storeLiquiGroupSplitMargin(LiquiGroupSplitMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, resultHandler);
+    public void storeLiquiGroupSplitMargin(List<LiquiGroupSplitMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
-    public void storePoolMargin(PoolMarginModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, POOL_MARGIN_COLLECTION, resultHandler);
+    public void storePoolMargin(List<PoolMarginModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, POOL_MARGIN_COLLECTION, resultHandler);
     }
 
     @Override
-    public void storePositionReport(PositionReportModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, POSITION_REPORT_COLLECTION, resultHandler);
+    public void storePositionReport(List<PositionReportModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, POSITION_REPORT_COLLECTION, resultHandler);
     }
 
     @Override
-    public void storeRiskLimitUtilization(RiskLimitUtilizationModel model, Handler<AsyncResult<Void>> resultHandler) {
-        this.store(model, RISK_LIMIT_UTILIZATION_COLLECTION, resultHandler);
+    public void storeRiskLimitUtilization(List<RiskLimitUtilizationModel> models, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, RISK_LIMIT_UTILIZATION_COLLECTION, resultHandler);
     }
 
     @Override
@@ -197,8 +197,8 @@ public class MongoPersistenceService implements PersistenceService {
         this.mongo.close();
     }
 
-    private void store(AbstractModel model, String collection, Handler<AsyncResult<Void>> resultHandler) {
-        this.storeIntoCollection(model, collection).setHandler(ar -> {
+    private void store(Collection<? extends AbstractModel> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
+        this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
             } else {
@@ -249,17 +249,21 @@ public class MongoPersistenceService implements PersistenceService {
         return Collections.unmodifiableList(neededCollections);
     }
 
-    private Future<MongoClientUpdateResult> storeIntoCollection(AbstractModel model, String collection) {
-        JsonObject queryParams = MongoPersistenceService.getQueryParams(model);
-        JsonObject document = MongoPersistenceService.getStoreDocument(model);
-        LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
-        Future<MongoClientUpdateResult> result = Future.future();
-        mongo.updateCollectionWithOptions(collection,
-                queryParams,
-                document,
-                new UpdateOptions().setUpsert(true),
-                result);
-        return result;
+    private Future<Void> storeIntoCollection(Collection<? extends AbstractModel> models, String collection) {
+        List<Future> futureList = new ArrayList<>();
+        models.forEach(model -> {
+            Future<MongoClientUpdateResult> future = Future.future();
+            JsonObject queryParams = MongoPersistenceService.getQueryParams(model);
+            JsonObject document = MongoPersistenceService.getStoreDocument(model);
+            LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
+            mongo.updateCollectionWithOptions(collection,
+                    queryParams,
+                    document,
+                    new UpdateOptions().setUpsert(true),
+                    future);
+            futureList.add(future);
+        });
+        return CompositeFuture.all(futureList).map((Void) null);
     }
 
     private Future<Void> createMissingCollections() {

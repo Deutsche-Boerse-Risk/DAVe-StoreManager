@@ -4,10 +4,12 @@
  import ch.qos.logback.classic.Logger;
  import ch.qos.logback.classic.spi.ILoggingEvent;
  import ch.qos.logback.core.Appender;
- import com.deutscheboerse.risk.dave.utils.TestConfig;
  import com.deutscheboerse.risk.dave.log.TestAppender;
  import com.deutscheboerse.risk.dave.model.*;
  import com.deutscheboerse.risk.dave.utils.DataHelper;
+ import com.deutscheboerse.risk.dave.utils.TestConfig;
+ import io.vertx.core.AsyncResult;
+ import io.vertx.core.Handler;
  import io.vertx.core.Vertx;
  import io.vertx.core.json.JsonArray;
  import io.vertx.core.json.JsonObject;
@@ -21,13 +23,13 @@
  import org.slf4j.LoggerFactory;
 
  import java.io.IOException;
- import java.util.ArrayList;
- import java.util.List;
- import java.util.Optional;
- import java.util.UUID;
+ import java.util.*;
  import java.util.function.BiConsumer;
+ import java.util.function.Function;
+ import java.util.stream.Collectors;
+ import java.util.stream.IntStream;
 
-@RunWith(VertxUnitRunner.class)
+ @RunWith(VertxUnitRunner.class)
 public class MongoPersistenceServiceIT {
     private static final TestAppender testAppender = TestAppender.getAppender(MongoPersistenceService.class);
     private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -127,7 +129,7 @@ public class MongoPersistenceServiceIT {
         Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
         rootLogger.detachAppender(stdout);
         testAppender.start();
-        persistenceErrorProxy.storeAccountMargin(model, context.asyncAssertFailure());
+        persistenceErrorProxy.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.INFO, "Back online");
         testAppender.stop();
         rootLogger.addAppender(stdout);
@@ -147,7 +149,7 @@ public class MongoPersistenceServiceIT {
         Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
         rootLogger.detachAppender(stdout);
         testAppender.start();
-        persistenceErrorProxy.storeAccountMargin(model, context.asyncAssertFailure());
+        persistenceErrorProxy.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.ERROR, "Still disconnected");
         testAppender.stop();
         rootLogger.addAppender(stdout);
@@ -165,7 +167,7 @@ public class MongoPersistenceServiceIT {
         Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
         rootLogger.detachAppender(stdout);
         testAppender.start();
-        AccountMarginModel model = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
+        AccountMarginModel model = DataHelper.getLastModelFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1, AccountMarginModel::new);
         persistenceErrorProxy.queryAccountMargin(RequestType.LATEST, DataHelper.getQueryParams(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.ERROR, "Still disconnected");
         testAppender.stop();
@@ -175,266 +177,106 @@ public class MongoPersistenceServiceIT {
     }
 
     @Test
-    public void testAccountMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1, (json) -> {
-            AccountMarginModel accountMarginModel = new AccountMarginModel(json);
-            persistenceProxy.storeAccountMargin(accountMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore1.awaitSuccess(30000);
-
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.ACCOUNT_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 2, (json) -> {
-            AccountMarginModel accountMarginModel = new AccountMarginModel(json);
-            persistenceProxy.storeAccountMargin(accountMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore2.awaitSuccess(30000);
-
-        this.checkCountInCollection(context, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION, firstMsgCount);
-        this.checkAccountMarginCollectionQuery(context);
-
-        AccountMarginModel firstModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 1);
-        AccountMarginModel secondModel = DataHelper.getLastModelFromFile(AccountMarginModel.class, 2);
-
-        // Check data
-        persistenceProxy.queryAccountMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
-        persistenceProxy.queryAccountMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
+    public void testAccountMarginStore(TestContext context) {
+        this.testStore(context,
+                DataHelper.ACCOUNT_MARGIN_FOLDER,
+                MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION,
+                persistenceProxy::storeAccountMargin,
+                persistenceProxy::queryAccountMargin,
+                AccountMarginModel::new);
     }
 
     @Test
     public void testLiquiGroupMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1, (json) -> {
-            LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(json);
-            persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore1.awaitSuccess(30000);
-
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2, (json) -> {
-            LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel(json);
-            persistenceProxy.storeLiquiGroupMargin(liquiGroupMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore2.awaitSuccess(30000);
-
-        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION, firstMsgCount);
-        this.checkLiquiGroupMarginCollectionQuery(context);
-
-        LiquiGroupMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupMarginModel.class, 1);
-        LiquiGroupMarginModel secondModel = DataHelper.getLastModelFromFile(LiquiGroupMarginModel.class, 2);
-
-        // Check data
-        persistenceProxy.queryLiquiGroupMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
-        persistenceProxy.queryLiquiGroupMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
+        this.testStore(context,
+                DataHelper.LIQUI_GROUP_MARGIN_FOLDER,
+                MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION,
+                persistenceProxy::storeLiquiGroupMargin,
+                persistenceProxy::queryLiquiGroupMargin,
+                LiquiGroupMarginModel::new);
     }
 
     @Test
     public void testLiquiGroupSplitMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1);
-        Async asyncStore1 = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1, (json) -> {
-            LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(json);
-            persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore1.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore1.awaitSuccess(30000);
-
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2);
-        Async asyncStore2 = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2, (json) -> {
-            LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel(json);
-            persistenceProxy.storeLiquiGroupSplitMargin(liquiGroupSplitMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncStore2.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncStore2.awaitSuccess(30000);
-
-        this.checkCountInCollection(context, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, firstMsgCount);
-        this.checkLiquiGroupSplitMarginCollectionQuery(context);
-
-        LiquiGroupSplitMarginModel firstModel = DataHelper.getLastModelFromFile(LiquiGroupSplitMarginModel.class, 1);
-        LiquiGroupSplitMarginModel secondModel = DataHelper.getLastModelFromFile(LiquiGroupSplitMarginModel.class, 2);
-
-        // Check data
-        persistenceProxy.queryLiquiGroupSplitMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
-        persistenceProxy.queryLiquiGroupSplitMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
+        this.testStore(context,
+                DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER,
+                MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION,
+                persistenceProxy::storeLiquiGroupSplitMargin,
+                persistenceProxy::queryLiquiGroupSplitMargin,
+                LiquiGroupSplitMarginModel::new);
     }
 
     @Test
     public void testPoolMarginStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 1, (json) -> {
-            PoolMarginModel poolMarginModel = new PoolMarginModel(json);
-            persistenceProxy.storePoolMargin(poolMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncFirstSnapshotStore.awaitSuccess(30000);
-
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.POOL_MARGIN_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POOL_MARGIN_FOLDER, 2, (json) -> {
-            PoolMarginModel poolMarginModel = new PoolMarginModel(json);
-            persistenceProxy.storePoolMargin(poolMarginModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.POOL_MARGIN_COLLECTION, firstMsgCount);
-        this.checkPoolMarginCollectionQuery(context);
-
-        PoolMarginModel firstModel = DataHelper.getLastModelFromFile(PoolMarginModel.class, 1);
-        PoolMarginModel secondModel = DataHelper.getLastModelFromFile(PoolMarginModel.class, 2);
-
-        // Check data
-        persistenceProxy.queryPoolMargin(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
-        persistenceProxy.queryPoolMargin(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
+        this.testStore(context,
+                DataHelper.POOL_MARGIN_FOLDER,
+                MongoPersistenceService.POOL_MARGIN_COLLECTION,
+                persistenceProxy::storePoolMargin,
+                persistenceProxy::queryPoolMargin,
+                PoolMarginModel::new);
     }
 
     @Test
     public void testPositionReportStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 1, (json) -> {
-            PositionReportModel positionReportModel = new PositionReportModel(json);
-            persistenceProxy.storePositionReport(positionReportModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncFirstSnapshotStore.awaitSuccess(30000);
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.POSITION_REPORT_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.POSITION_REPORT_FOLDER, 2, (json) -> {
-            PositionReportModel positionReportModel = new PositionReportModel(json);
-            persistenceProxy.storePositionReport(positionReportModel, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.POSITION_REPORT_COLLECTION, firstMsgCount );
-        this.checkPositionReportCollectionQuery(context);
-
-        PositionReportModel firstModel = DataHelper.getLastModelFromFile(PositionReportModel.class, 1);
-        PositionReportModel secondModel = DataHelper.getLastModelFromFile(PositionReportModel.class, 2);
-
-        // Check data
-        persistenceProxy.queryPositionReport(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
-        persistenceProxy.queryPositionReport(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
-                context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
-        ));
+        this.testStore(context,
+                DataHelper.POSITION_REPORT_FOLDER,
+                MongoPersistenceService.POSITION_REPORT_COLLECTION,
+                persistenceProxy::storePositionReport,
+                persistenceProxy::queryPositionReport,
+                PositionReportModel::new);
     }
 
     @Test
     public void testRiskLimitUtilizationStore(TestContext context) throws IOException {
-        int firstMsgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1);
-        Async asyncFirstSnapshotStore = context.async(firstMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1, (json) -> {
-            RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(json);
-            persistenceProxy.storeRiskLimitUtilization(model, ar -> {
+        this.testStore(context,
+                DataHelper.RISK_LIMIT_UTILIZATION_FOLDER,
+                MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION,
+                persistenceProxy::storeRiskLimitUtilization,
+                persistenceProxy::queryRiskLimitUtilization,
+                RiskLimitUtilizationModel::new);
+    }
+
+    private interface StoreFunction<T extends AbstractModel> {
+        void store(List<T> models, Handler<AsyncResult<Void>> resultHandler);
+    }
+
+    private interface QueryFunction {
+        void query(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
+    }
+
+    private <T extends AbstractModel>
+    void testStore(TestContext context, String dataFolder, String collection,
+                   StoreFunction<T> storeFunction, QueryFunction queryFunction,
+                   Function<JsonObject, T> modelFactory) {
+
+        IntStream.rangeClosed(1, 2).forEach(ttsaveNo -> {
+            Async asyncStore = context.async(1);
+            List<T> snapshot = DataHelper.readTTSaveFile(dataFolder, ttsaveNo)
+                    .stream()
+                    .map(modelFactory)
+                    .collect(Collectors.toList());
+            storeFunction.store(snapshot, ar -> {
                 if (ar.succeeded()) {
-                    asyncFirstSnapshotStore.countDown();
+                    asyncStore.countDown();
                 } else {
                     context.fail(ar.cause());
                 }
             });
+            asyncStore.awaitSuccess(30000);
         });
-        asyncFirstSnapshotStore.awaitSuccess(30000);
-        int secondMsgCount = DataHelper.getJsonObjectCount(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2);
-        Async asyncSecondSnapshotStore = context.async(secondMsgCount);
-        DataHelper.readTTSaveFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2, (json) -> {
-            RiskLimitUtilizationModel model = new RiskLimitUtilizationModel(json);
-            persistenceProxy.storeRiskLimitUtilization(model, ar -> {
-                if (ar.succeeded()) {
-                    asyncSecondSnapshotStore.countDown();
-                } else {
-                    context.fail(ar.cause());
-                }
-            });
-        });
-        asyncSecondSnapshotStore.awaitSuccess(30000);
-        this.checkCountInCollection(context, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION, firstMsgCount);
-        this.checkRiskLimitUtilizationCollectionQuery(context);
 
-        RiskLimitUtilizationModel firstModel = DataHelper.getLastModelFromFile(RiskLimitUtilizationModel.class, 1);
-        RiskLimitUtilizationModel secondModel = DataHelper.getLastModelFromFile(RiskLimitUtilizationModel.class, 2);
+        int expectedCollectionCount = DataHelper.getJsonObjectCount(dataFolder, 1);
+        this.checkCountInCollection(context, collection, expectedCollectionCount);
 
-        // Check data
-        persistenceProxy.queryRiskLimitUtilization(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
+        T firstModel = DataHelper.getLastModelFromFile(dataFolder, 1, modelFactory);
+        T secondModel = DataHelper.getLastModelFromFile(dataFolder, 2, modelFactory);
+
+        checkMongoCollection(context, firstModel, secondModel, collection);
+
+        queryFunction.query(RequestType.HISTORY, DataHelper.getQueryParams(firstModel), context.asyncAssertSuccess(res ->
                 context.assertEquals(firstModel.toJson(), new JsonArray(res).getJsonObject(0))
         ));
-        persistenceProxy.queryRiskLimitUtilization(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
+        queryFunction.query(RequestType.LATEST, DataHelper.getQueryParams(secondModel), context.asyncAssertSuccess(res ->
                 context.assertEquals(secondModel.toJson(), new JsonArray(res).getJsonObject(0))
         ));
     }
@@ -465,55 +307,7 @@ public class MongoPersistenceServiceIT {
         asyncHistoryCount.awaitSuccess(5000);
     }
 
-    private void checkAccountMarginCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 2).orElse(new JsonObject());
-        AccountMarginModel firstModel = new AccountMarginModel(firstJsonData);
-        AccountMarginModel secondModel = new AccountMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION);
-    }
-
-    private void checkLiquiGroupMarginCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 2).orElse(new JsonObject());
-        LiquiGroupMarginModel firstModel = new LiquiGroupMarginModel(firstJsonData);
-        LiquiGroupMarginModel secondModel = new LiquiGroupMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.LIQUI_GROUP_MARGIN_COLLECTION);
-    }
-
-    private void checkLiquiGroupSplitMarginCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 2).orElse(new JsonObject());
-        LiquiGroupSplitMarginModel firstModel = new LiquiGroupSplitMarginModel(firstJsonData);
-        LiquiGroupSplitMarginModel secondModel = new LiquiGroupSplitMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.LIQUI_GROUP_SPLIT_MARGIN_COLLECTION);
-    }
-
-    private void checkPoolMarginCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.POOL_MARGIN_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.POOL_MARGIN_FOLDER, 2).orElse(new JsonObject());
-        PoolMarginModel firstModel = new PoolMarginModel(firstJsonData);
-        PoolMarginModel secondModel = new PoolMarginModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.POOL_MARGIN_COLLECTION);
-    }
-
-    private void checkPositionReportCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.POSITION_REPORT_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.POSITION_REPORT_FOLDER, 2).orElse(new JsonObject());
-        PositionReportModel firstModel = new PositionReportModel(firstJsonData);
-        PositionReportModel secondModel = new PositionReportModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.POSITION_REPORT_COLLECTION);
-    }
-
-    private void checkRiskLimitUtilizationCollectionQuery(TestContext context) {
-        JsonObject firstJsonData = DataHelper.getLastJsonFromFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1).orElse(new JsonObject());
-        JsonObject secondJsonData = DataHelper.getLastJsonFromFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 2).orElse(new JsonObject());
-        RiskLimitUtilizationModel firstModel = new RiskLimitUtilizationModel(firstJsonData);
-        RiskLimitUtilizationModel secondModel = new RiskLimitUtilizationModel(secondJsonData);
-        checkCollection(context, firstModel, secondModel, MongoPersistenceService.RISK_LIMIT_UTILIZATION_COLLECTION);
-    }
-
-    private void checkCollection(TestContext context, AbstractModel firstSnapshotModel, AbstractModel secondSnapshotModel, String collectionName) {
+    private void checkMongoCollection(TestContext context, AbstractModel firstSnapshotModel, AbstractModel secondSnapshotModel, String collectionName) {
         JsonObject param = MongoPersistenceServiceIT.getQueryParams(firstSnapshotModel);
         Assert.assertEquals(param, MongoPersistenceServiceIT.getQueryParams(secondSnapshotModel));
         Async asyncQuery = context.async();

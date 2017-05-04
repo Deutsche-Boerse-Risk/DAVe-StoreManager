@@ -6,6 +6,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RestSenderMissingFieldIgnoreError extends RestSenderRegular {
@@ -13,17 +14,20 @@ public class RestSenderMissingFieldIgnoreError extends RestSenderRegular {
         super(vertx);
     }
 
-    protected void postModel(String requestURI, JsonObject model, Handler<AsyncResult<Void>> resultHandler) {
-        model.remove("snapshotID");
-        model.remove("warningLevel");
-        model.remove("throttleLevel");
-        model.remove("rejectLevel");
+    @Override
+    protected void postModels(String requestURI, JsonArray models, Handler<AsyncResult<Void>> resultHandler) {
+        models.forEach(json -> {
+            ((JsonObject) json).remove("snapshotID");
+            ((JsonObject) json).remove("warningLevel");
+            ((JsonObject) json).remove("throttleLevel");
+            ((JsonObject) json).remove("rejectLevel");
+        });
         this.httpClient.request(HttpMethod.POST,
                 TestConfig.API_PORT,
                 "localhost",
                 requestURI,
                 response -> response.bodyHandler(body -> resultHandler.handle(Future.succeededFuture())))
                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                .end(model.encode());
+                .end(models.encode());
     }
 }

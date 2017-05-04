@@ -7,6 +7,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
+import java.util.List;
+
 @ProxyGen
 public interface PersistenceService {
     String SERVICE_ADDRESS = "persistenceService";
@@ -17,12 +19,12 @@ public interface PersistenceService {
 
     void initialize(Handler<AsyncResult<Void>> resultHandler);
 
-    void storeAccountMargin(AccountMarginModel model, Handler<AsyncResult<Void>> resultHandler);
-    void storeLiquiGroupMargin(LiquiGroupMarginModel model, Handler<AsyncResult<Void>> resultHandler);
-    void storeLiquiGroupSplitMargin(LiquiGroupSplitMarginModel model, Handler<AsyncResult<Void>> resultHandler);
-    void storePoolMargin(PoolMarginModel model, Handler<AsyncResult<Void>> resultHandler);
-    void storePositionReport(PositionReportModel model, Handler<AsyncResult<Void>> resultHandler);
-    void storeRiskLimitUtilization(RiskLimitUtilizationModel model, Handler<AsyncResult<Void>> resultHandler);
+    void storeAccountMargin(List<AccountMarginModel> models, Handler<AsyncResult<Void>> resultHandler);
+    void storeLiquiGroupMargin(List<LiquiGroupMarginModel> models, Handler<AsyncResult<Void>> resultHandler);
+    void storeLiquiGroupSplitMargin(List<LiquiGroupSplitMarginModel> models, Handler<AsyncResult<Void>> resultHandler);
+    void storePoolMargin(List<PoolMarginModel> models, Handler<AsyncResult<Void>> resultHandler);
+    void storePositionReport(List<PositionReportModel> models, Handler<AsyncResult<Void>> resultHandler);
+    void storeRiskLimitUtilization(List<RiskLimitUtilizationModel> models, Handler<AsyncResult<Void>> resultHandler);
 
     void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
     void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
