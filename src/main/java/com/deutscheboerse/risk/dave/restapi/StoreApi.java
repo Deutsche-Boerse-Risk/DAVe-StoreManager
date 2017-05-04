@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -20,13 +21,15 @@ import java.util.function.Function;
 
 public class StoreApi {
     private static final Logger LOG = LoggerFactory.getLogger(StoreApi.class);
+    private static final int DEFAULT_PROXY_SEND_TIMEOUT = 60000;
 
     protected final Vertx vertx;
     private final PersistenceService persistenceProxy;
 
     public StoreApi(Vertx vertx) {
         this.vertx = vertx;
-        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);
+        DeliveryOptions deliveryOptions = new DeliveryOptions().setSendTimeout(DEFAULT_PROXY_SEND_TIMEOUT);
+        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS, deliveryOptions);
     }
 
     public void storeHandler(RoutingContext routingContext) {
@@ -73,7 +76,7 @@ public class StoreApi {
     }
 
     private <T extends AbstractModel> List<T> getModelsFromJsonArray(JsonArray jsonArray, Function<JsonObject, T> modelFactory) {
-        List<T> models = new ArrayList<>();
+        List<T> models = new ArrayList<>(jsonArray.size());
         jsonArray.forEach(json -> {
             T model = modelFactory.apply((JsonObject) json);
             model.validate();
