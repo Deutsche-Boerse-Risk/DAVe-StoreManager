@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DataHelper {
@@ -62,17 +63,10 @@ public class DataHelper {
                 .reduce((a, b) -> b);
     }
 
-    public static <T extends AbstractModel> T getLastModelFromFile(Class<T> clazz, int ttsaveNo) {
-        String folderName = clazz.getSimpleName().substring(0, 1).toLowerCase() +
-                clazz.getSimpleName().substring(1).replace("Model", "");
-        JsonObject json = getLastJsonFromFile(folderName, ttsaveNo).orElse(new JsonObject());
-        try {
-            T model = clazz.newInstance();
-            model.mergeIn(json);
-            return model;
-        } catch (IllegalAccessException|InstantiationException e) {
-            throw new AssertionError();
-        }
+    public static <T extends AbstractModel> T getLastModelFromFile(String folderName, int ttsaveNo,
+                Function<JsonObject, T> modelFactory) {
+        return modelFactory.apply(
+                getLastJsonFromFile(folderName, ttsaveNo).orElse(new JsonObject()));
     }
 
     public static int getJsonObjectCount(String folderName, int ttsaveNo) {

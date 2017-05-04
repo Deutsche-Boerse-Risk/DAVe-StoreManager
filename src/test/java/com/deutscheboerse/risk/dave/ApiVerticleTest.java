@@ -15,9 +15,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -32,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @RunWith(VertxUnitRunner.class)
 public class ApiVerticleTest {
@@ -77,8 +76,8 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryAccountMargin(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_ACCOUNT_MARGIN_API + "/latest", RequestType.LATEST, AccountMarginModel.class);
-        this.testQueryCompleteUrl(context, QUERY_ACCOUNT_MARGIN_API + "/history", RequestType.HISTORY, AccountMarginModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_ACCOUNT_MARGIN_API, DataHelper.ACCOUNT_MARGIN_FOLDER, AccountMarginModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_ACCOUNT_MARGIN_API, DataHelper.ACCOUNT_MARGIN_FOLDER, AccountMarginModel::new);
     }
 
     // LiquiGroup Margin
@@ -106,8 +105,8 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryLiquiGroupMargin(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_LIQUI_GROUP_MARGIN_API + "/latest", RequestType.LATEST, LiquiGroupMarginModel.class);
-        this.testQueryCompleteUrl(context, QUERY_LIQUI_GROUP_MARGIN_API + "/history", RequestType.HISTORY, LiquiGroupMarginModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_LIQUI_GROUP_MARGIN_API, DataHelper.LIQUI_GROUP_MARGIN_FOLDER, LiquiGroupMarginModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_LIQUI_GROUP_MARGIN_API, DataHelper.LIQUI_GROUP_MARGIN_FOLDER, LiquiGroupMarginModel::new);
     }
 
     // LiquiGroupSplit Margin
@@ -135,8 +134,10 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryLiquiGroupSplitMargin(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_LIQUI_GROUP_SPLIT_MARGIN_API + "/latest", RequestType.LATEST, LiquiGroupSplitMarginModel.class);
-        this.testQueryCompleteUrl(context, QUERY_LIQUI_GROUP_SPLIT_MARGIN_API + "/history", RequestType.HISTORY, LiquiGroupSplitMarginModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_LIQUI_GROUP_SPLIT_MARGIN_API, DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER,
+                LiquiGroupSplitMarginModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_LIQUI_GROUP_SPLIT_MARGIN_API, DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER,
+                LiquiGroupSplitMarginModel::new);
     }
 
     // Pool Margin
@@ -164,8 +165,8 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryPoolMargin(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_POOL_MARGIN_API + "/latest", RequestType.LATEST, PoolMarginModel.class);
-        this.testQueryCompleteUrl(context, QUERY_POOL_MARGIN_API + "/history", RequestType.HISTORY, PoolMarginModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_POOL_MARGIN_API, DataHelper.POOL_MARGIN_FOLDER, PoolMarginModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_POOL_MARGIN_API, DataHelper.POOL_MARGIN_FOLDER, PoolMarginModel::new);
     }
 
     // Position Report
@@ -193,8 +194,8 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryPositionReport(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_POSITION_REPORT_API + "/latest", RequestType.LATEST, PositionReportModel.class);
-        this.testQueryCompleteUrl(context, QUERY_POSITION_REPORT_API + "/history", RequestType.HISTORY, PositionReportModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_POSITION_REPORT_API, DataHelper.POSITION_REPORT_FOLDER, PositionReportModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_POSITION_REPORT_API, DataHelper.POSITION_REPORT_FOLDER, PositionReportModel::new);
     }
 
     // Risk Limit Utilization
@@ -222,8 +223,10 @@ public class ApiVerticleTest {
 
     @Test
     public void testQueryRiskLimitUtilization(TestContext context) {
-        this.testQueryCompleteUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API + "/latest", RequestType.LATEST, RiskLimitUtilizationModel.class);
-        this.testQueryCompleteUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API + "/history", RequestType.HISTORY, RiskLimitUtilizationModel.class);
+        this.testQueryCompleteHistoryUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API, DataHelper.RISK_LIMIT_UTILIZATION_FOLDER,
+                RiskLimitUtilizationModel::new);
+        this.testQueryCompleteLatestUrl(context, QUERY_RISK_LIMIT_UTILIZATION_API, DataHelper.RISK_LIMIT_UTILIZATION_FOLDER,
+                RiskLimitUtilizationModel::new);
     }
 
     @Test
@@ -231,18 +234,13 @@ public class ApiVerticleTest {
         EchoPersistenceService persistenceService = new EchoPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
-        JsonObject httpConfig = TestConfig.getApiConfig();
-        httpConfig.put("sslRequireClientAuth", true);
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(httpConfig);
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context, new JsonObject().put("sslRequireClientAuth", true));
 
         final Async asyncWithoutCert = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).get(TestConfig.API_PORT, "localhost", QUERY_POSITION_REPORT_API + "/latest", res -> {
-            context.fail("Connected to HTTPS with required client authentication without certificate!");
-            }).exceptionHandler(res -> asyncWithoutCert.complete()).end();
+        HttpClientOptions httpClientOptions = createSslOptions();
+        vertx.createHttpClient(httpClientOptions).get(TestConfig.API_PORT, "localhost", QUERY_POSITION_REPORT_API + "/latest", res ->
+            context.fail("Connected to HTTPS with required client authentication without certificate!")
+        ).exceptionHandler(res -> asyncWithoutCert.complete()).end();
         asyncWithoutCert.awaitSuccess(30000);
 
         final Async asyncWithCert = context.async();
@@ -270,21 +268,11 @@ public class ApiVerticleTest {
         EchoPersistenceService persistenceService = new EchoPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
-            context.assertEquals(HttpResponseStatus.OK.code(), res.statusCode());
-            res.bodyHandler(body -> {
-                JsonArray bd = body.toJsonArray();
-                context.assertEquals(expectedResult, bd);
-                async.complete();
-            });
-        });
+        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(),
+                asyncAssertEquals(context, async, expectedResult));
 
         async.awaitSuccess(300000);
         ProxyHelper.unregisterService(serviceMessageConsumer);
@@ -297,14 +285,10 @@ public class ApiVerticleTest {
                 .put("member", "MEMBER")
                 .put("contractYear", 1234.5d);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), res.statusCode());
             async.complete();
         });
@@ -319,14 +303,10 @@ public class ApiVerticleTest {
                 .put("member", "MEMBER")
                 .put("foo", 2016.2);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), res.statusCode());
             async.complete();
         });
@@ -340,14 +320,10 @@ public class ApiVerticleTest {
                 .put("clearer", "CLEARER")
                 .put("member", "MEMBER");
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(String.format("%s/query/unknown/latest", ApiVerticle.API_PREFIX)).addParams(queryParams).build(), res -> {
+        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(String.format("%s/query/unknown/latest", ApiVerticle.API_PREFIX)).addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.NOT_FOUND.code(), res.statusCode());
             async.complete();
         });
@@ -360,18 +336,14 @@ public class ApiVerticleTest {
         ErrorPersistenceService persistenceService = new ErrorPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         JsonObject queryParams = new JsonObject()
                 .put("clearer", "CLEARER")
                 .put("member", "MEMBER")
                 .put("account", "ACCOUNT");
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
+        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
             context.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(), res.statusCode());
             async.complete();
         });
@@ -382,14 +354,10 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreUnknownModel(TestContext context) {
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         final Async async = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).request(HttpMethod.POST,
+        this.createSslClient().request(HttpMethod.POST,
                 TestConfig.API_PORT,
                 "localhost",
                 String.format("%s/store/unknown", ApiVerticle.API_PREFIX),
@@ -409,10 +377,7 @@ public class ApiVerticleTest {
         CountdownPersistenceService persistenceService = new CountdownPersistenceService(async);
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         sender.accept(context.asyncAssertSuccess());
         async.awaitSuccess(30000);
@@ -427,10 +392,7 @@ public class ApiVerticleTest {
         rootLogger.detachAppender(stdout);
         testAppender.start();
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        this.deployApiVerticle(context);
 
         sender.accept(context.asyncAssertSuccess());
         testAppender.waitForMessageCount(Level.ERROR, msgCount);
@@ -441,35 +403,74 @@ public class ApiVerticleTest {
         ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 
-    private void testQueryCompleteUrl(TestContext context, String uri, RequestType requestType, Class<? extends AbstractModel> modelClazz) {
+    private void testQueryCompleteHistoryUrl(TestContext context, String uri, String folderName,
+            Function<JsonObject, ? extends AbstractModel> modelFactory) {
+        this.testQueryCompleteUrl(context, uri+"/history", folderName, RequestType.HISTORY, modelFactory);
+    }
+
+    private void testQueryCompleteLatestUrl(TestContext context, String uri, String folderName,
+            Function<JsonObject, ? extends AbstractModel> modelFactory) {
+        this.testQueryCompleteUrl(context, uri+"/latest", folderName, RequestType.LATEST, modelFactory);
+    }
+
+    private void testQueryCompleteUrl(TestContext context, String uri, String folderName, RequestType requestType,
+                Function<JsonObject, ? extends AbstractModel> modelFactory) {
         EchoPersistenceService persistenceService = new EchoPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
-        JsonObject queryParams = DataHelper.getQueryParams(DataHelper.getLastModelFromFile(modelClazz, 1));
+        JsonObject queryParams = DataHelper.getQueryParams(DataHelper.getLastModelFromFile(folderName, 1, modelFactory));
+
+        final String modelClassName = modelFactory.apply(new JsonObject()).getClass().getSimpleName();
 
         JsonArray expectedResult = new JsonArray().add(new JsonObject()
-                .put("model", modelClazz.getSimpleName())
+                .put("model", modelClassName)
                 .put("requestType", requestType)
                 .mergeIn(queryParams)
         );
+        this.deployApiVerticle(context);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig());
-        Async asyncDeploy = context.async();
-        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(ar -> asyncDeploy.complete()));
-        asyncDeploy.awaitSuccess();
+        final Async async = context.async();
+        this.createSslClient()
+                .getNow(TestConfig.API_PORT, "localhost", new URIBuilder(uri).addParams(queryParams).build(),
+                        asyncAssertEquals(context, async, expectedResult));
 
-        final Async asyncQuerySent = context.async();
-        HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
-        vertx.createHttpClient(httpClientOptions).getNow(TestConfig.API_PORT, "localhost", new URIBuilder(uri).addParams(queryParams).build(), res -> {
+        async.awaitSuccess(30000);
+        ProxyHelper.unregisterService(serviceMessageConsumer);
+    }
+
+    private static Handler<HttpClientResponse> asyncAssertEquals(TestContext context, Async async, JsonArray expectedResult) {
+        return res -> {
             context.assertEquals(HttpResponseStatus.OK.code(), res.statusCode());
             res.bodyHandler(body -> {
                 JsonArray bd = body.toJsonArray();
                 context.assertEquals(expectedResult, bd);
-                asyncQuerySent.complete();
+                async.complete();
             });
-        });
-        asyncQuerySent.awaitSuccess(30000);
-        ProxyHelper.unregisterService(serviceMessageConsumer);
+        };
+    }
+
+    private static HttpClientOptions createSslOptions() {
+        return new HttpClientOptions()
+                .setSsl(true)
+                .setVerifyHost(false)
+                .setPemTrustOptions(TestConfig.API_SERVER_CERTIFICATE.trustOptions());
+    }
+
+    private HttpClient createSslClient() {
+        return this.vertx.createHttpClient(createSslOptions());
+    }
+
+    private void deployApiVerticle(TestContext context) {
+        this.deployApiVerticle(context, new JsonObject());
+    }
+
+    private void deployApiVerticle(TestContext context, JsonObject options) {
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig().mergeIn(options));
+        Async asyncDeploy = context.async();
+        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(
+                ar -> asyncDeploy.complete()
+        ));
+        asyncDeploy.awaitSuccess();
     }
 
     @After
