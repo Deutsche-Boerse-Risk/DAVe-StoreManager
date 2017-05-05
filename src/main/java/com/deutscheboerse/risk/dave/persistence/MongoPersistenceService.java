@@ -229,7 +229,7 @@ public class MongoPersistenceService implements PersistenceService {
                 .filter(entry -> !model.getKeys().contains(entry.getKey()))
                 .forEach(entry -> pushDocument.put(entry.getKey(), entry.getValue()));
         document.put("$set", setDocument);
-        document.put("$push", new JsonObject().put("snapshots", pushDocument));
+        document.put("$addToSet", new JsonObject().put("snapshots", pushDocument));
         return document;
     }
 
