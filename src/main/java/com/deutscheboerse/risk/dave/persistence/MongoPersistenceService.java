@@ -3,6 +3,7 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
+import com.mongodb.client.model.WriteModel;
 import io.vertx.core.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -10,9 +11,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.IndexOptions;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.mongo.MongoClientUpdateResult;
 import io.vertx.ext.mongo.UpdateOptions;
+import io.vertx.ext.mongo.impl.MongoBulkClient;
 import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
@@ -30,15 +31,16 @@ public class MongoPersistenceService implements PersistenceService {
     static final String POOL_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(PoolMarginModel.class);
     static final String POSITION_REPORT_COLLECTION = MongoPersistenceService.getCollectionName(PositionReportModel.class);
     static final String RISK_LIMIT_UTILIZATION_COLLECTION = MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class);
+    private static final int BULK_SIZE = 1000;
 
     private final Vertx vertx;
-    private final MongoClient mongo;
+    private final MongoBulkClient mongo;
     private final HealthCheck healthCheck;
     private boolean closed;
     private final ConnectionManager connectionManager = new ConnectionManager();
 
     @Inject
-    public MongoPersistenceService(Vertx vertx, MongoClient mongo) {
+    public MongoPersistenceService(Vertx vertx, MongoBulkClient mongo) {
         this.vertx = vertx;
         this.healthCheck = new HealthCheck(this.vertx);
         this.mongo = mongo;
@@ -251,18 +253,29 @@ public class MongoPersistenceService implements PersistenceService {
 
     private Future<Void> storeIntoCollection(Collection<? extends AbstractModel> models, String collection) {
         List<Future> futureList = new ArrayList<>();
+        List<WriteModel<JsonObject>> bulkWrites = new ArrayList<>();
+
+        Runnable writeBulk = () -> {
+            Future<MongoClientUpdateResult> bulkFuture = Future.future();
+            this.mongo.bulkWrite(bulkWrites, collection, bulkFuture);
+            futureList.add(bulkFuture);
+            bulkWrites.clear();
+        };
+
         models.forEach(model -> {
-            Future<MongoClientUpdateResult> future = Future.future();
             JsonObject queryParams = MongoPersistenceService.getQueryParams(model);
             JsonObject document = MongoPersistenceService.getStoreDocument(model);
             LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
-            mongo.updateCollectionWithOptions(collection,
-                    queryParams,
-                    document,
-                    new UpdateOptions().setUpsert(true),
-                    future);
-            futureList.add(future);
+
+            mongo.queueBulkUpdate(bulkWrites, queryParams, document, new UpdateOptions().setUpsert(true));
+
+            if (bulkWrites.size() >= BULK_SIZE) {
+                writeBulk.run();
+            }
         });
+
+        writeBulk.run();
+
         return CompositeFuture.all(futureList).map((Void) null);
     }
 

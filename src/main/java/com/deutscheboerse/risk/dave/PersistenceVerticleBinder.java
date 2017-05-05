@@ -9,7 +9,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.mongo.impl.MongoBulkClient;
 
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -34,9 +34,9 @@ public class PersistenceVerticleBinder extends AbstractModule {
             jsonConfig.put("db_name", mongoConfig.getDbName());
             jsonConfig.put("useObjectId", true);
             jsonConfig.put("connection_string", mongoConfig.getConnectionUrl());
-            MongoClient mongo = MongoClient.createShared(Vertx.currentContext().owner(), jsonConfig);
+            MongoBulkClient mongo = MongoBulkClient.createShared(Vertx.currentContext().owner(), jsonConfig);
 
-            bind(MongoClient.class).toInstance(mongo);
+            bind(MongoBulkClient.class).toInstance(mongo);
         } catch (IOException e) {
             throw new AssertionError(e);
         }

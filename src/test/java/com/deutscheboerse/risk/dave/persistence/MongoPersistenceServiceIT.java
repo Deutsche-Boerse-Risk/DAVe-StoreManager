@@ -13,7 +13,7 @@
  import io.vertx.core.Vertx;
  import io.vertx.core.json.JsonArray;
  import io.vertx.core.json.JsonObject;
- import io.vertx.ext.mongo.MongoClient;
+ import io.vertx.ext.mongo.impl.MongoBulkClient;
  import io.vertx.ext.unit.Async;
  import io.vertx.ext.unit.TestContext;
  import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -34,7 +34,7 @@ public class MongoPersistenceServiceIT {
     private static final TestAppender testAppender = TestAppender.getAppender(MongoPersistenceService.class);
     private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     private static Vertx vertx;
-    private static MongoClient mongoClient;
+    private static MongoBulkClient mongoClient;
     private static PersistenceService persistenceProxy;
 
     @BeforeClass
@@ -43,7 +43,7 @@ public class MongoPersistenceServiceIT {
         JsonObject config = TestConfig.getMongoConfig();
         JsonObject mongoConfig = TestConfig.getMongoClientConfig(config);
 
-        MongoPersistenceServiceIT.mongoClient = MongoClient.createShared(MongoPersistenceServiceIT.vertx, mongoConfig);
+        MongoPersistenceServiceIT.mongoClient = MongoBulkClient.createShared(MongoPersistenceServiceIT.vertx, mongoConfig);
 
         ProxyHelper.registerService(PersistenceService.class, vertx, new MongoPersistenceService(vertx, mongoClient), PersistenceService.SERVICE_ADDRESS);
         MongoPersistenceServiceIT.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);
@@ -119,7 +119,7 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testConnectionStatusBackOnline(TestContext context) throws InterruptedException {
-        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("updateCollectionWithOptions"));
+        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("bulkWrite"));
 
         final PersistenceService persistenceErrorProxy = getPersistenceErrorProxy(proxyConfig);
         persistenceErrorProxy.initialize(context.asyncAssertSuccess());
@@ -139,7 +139,7 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testConnectionStatusErrorAfterStore(TestContext context) throws InterruptedException {
-        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("updateCollectionWithOptions").add("runCommand"));
+        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("bulkWrite").add("runCommand"));
 
         final PersistenceService persistenceErrorProxy = getPersistenceErrorProxy(proxyConfig);
         persistenceErrorProxy.initialize(context.asyncAssertSuccess());
