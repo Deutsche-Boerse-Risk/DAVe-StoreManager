@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -78,6 +77,7 @@ public class DataHelper {
     public static JsonObject getQueryParams(AbstractModel model) {
         JsonObject queryParams = new JsonObject();
         model.getKeys().forEach(key -> queryParams.put(key, model.getValue(key)));
+        model.getUniqueFields().forEach(uniqueField -> queryParams.put(uniqueField, model.getValue(uniqueField)));
         return queryParams;
     }
 

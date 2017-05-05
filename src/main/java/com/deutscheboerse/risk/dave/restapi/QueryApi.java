@@ -18,6 +18,8 @@ import io.vertx.serviceproxy.ProxyHelper;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class QueryApi {
     private static final Logger LOG = LoggerFactory.getLogger(QueryApi.class);
@@ -103,9 +105,12 @@ public class QueryApi {
     }
 
     private Class<?> getParameterType(String parameterName, AbstractModel model) {
-        Preconditions.checkArgument(model.getKeysDescriptor().containsKey(parameterName),
+        Map<String, Class> parameterDescriptor = new HashMap<>(model.getKeysDescriptor());
+        parameterDescriptor.putAll(model.getUniqueFieldsDescriptor());
+
+        Preconditions.checkArgument(parameterDescriptor.containsKey(parameterName),
                 "Unknown parameter '%s'", parameterName);
-        return model.getKeysDescriptor().get(parameterName);
+        return parameterDescriptor.get(parameterName);
     }
 
     private <T> T convertValue(String value, Class<T> clazz) {

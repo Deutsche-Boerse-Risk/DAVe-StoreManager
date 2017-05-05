@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
@@ -178,6 +179,7 @@ public class MongoPersistenceService implements PersistenceService {
     private static JsonObject getLatestSnapshotProject(AbstractModel model) {
         JsonObject project = new JsonObject();
         model.getKeys().forEach(key -> project.put(key, 1));
+        model.getUniqueFields().forEach(uniqueField -> project.put(uniqueField, 1));
         project.put("snapshots", new JsonObject().put("$slice", new JsonArray().add("$snapshots").add(-1)));
         return project;
     }
@@ -186,6 +188,7 @@ public class MongoPersistenceService implements PersistenceService {
         JsonObject project = new JsonObject();
         project.put("_id", 0);
         model.getKeys().forEach(key -> project.put(key, 1));
+        model.getUniqueFields().forEach(uniqueField -> project.put(uniqueField, 1));
         model.getNonKeys().forEach(nonKey -> project.put(nonKey, "$snapshots." + nonKey));
         model.getHeader().forEach(header -> project.put(header, "$snapshots." + header));
         return project;
@@ -211,6 +214,7 @@ public class MongoPersistenceService implements PersistenceService {
     private static JsonObject getQueryParams(AbstractModel model) {
         JsonObject queryParams = new JsonObject();
         model.getKeys().forEach(key -> queryParams.put(key, model.getValue(key)));
+        model.getUniqueFields().forEach(uniqueField -> queryParams.put(uniqueField, model.getValue(uniqueField)));
         return queryParams;
     }
 
@@ -225,8 +229,10 @@ public class MongoPersistenceService implements PersistenceService {
         JsonObject setDocument = new JsonObject();
         JsonObject pushDocument = new JsonObject();
         model.getKeys().forEach(key -> setDocument.put(key, model.getValue(key)));
+        model.getUniqueFields().forEach(uniqueField -> setDocument.put(uniqueField, model.getValue(uniqueField)));
         model.stream()
                 .filter(entry -> !model.getKeys().contains(entry.getKey()))
+                .filter(entry -> !model.getUniqueFields().contains(entry.getKey()))
                 .forEach(entry -> pushDocument.put(entry.getKey(), entry.getValue()));
         document.put("$set", setDocument);
         document.put("$addToSet", new JsonObject().put("snapshots", pushDocument));

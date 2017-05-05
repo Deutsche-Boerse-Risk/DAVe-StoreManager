@@ -30,9 +30,15 @@ public class LiquiGroupMarginModel extends AbstractModel {
     }
 
     @Override
+    public Map<String, Class> getUniqueFieldsDescriptor() {
+        Map<String, Class<?>> uniqueFields = new LinkedHashMap<>();
+        uniqueFields.put("marginGroup", String.class);
+        return Collections.unmodifiableMap(uniqueFields);
+    }
+
+    @Override
     public Map<String, Class> getNonKeysDescriptor() {
         Map<String, Class<?>> nonKeys = new LinkedHashMap<>();
-        nonKeys.put("marginGroup", String.class);
         nonKeys.put("premiumMargin", Double.class);
         nonKeys.put("currentLiquidatingMargin", Double.class);
         nonKeys.put("futuresSpreadMargin", Double.class);

@@ -29,10 +29,16 @@ public class AccountMarginModel extends AbstractModel {
     }
 
     @Override
+    public Map<String, Class> getUniqueFieldsDescriptor() {
+        Map<String, Class<?>> uniqueFields = new LinkedHashMap<>();
+        uniqueFields.put("clearingCurrency", String.class);
+        uniqueFields.put("pool", String.class);
+        return Collections.unmodifiableMap(uniqueFields);
+    }
+
+    @Override
     public Map<String, Class> getNonKeysDescriptor() {
         Map<String, Class<?>> nonKeys = new LinkedHashMap<>();
-        nonKeys.put("clearingCurrency", String.class);
-        nonKeys.put("pool", String.class);
         nonKeys.put("marginReqInMarginCurr", Double.class);
         nonKeys.put("marginReqInClrCurr", Double.class);
         nonKeys.put("unadjustedMarginRequirement", Double.class);
