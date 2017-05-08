@@ -43,12 +43,16 @@ public abstract class AbstractModel extends JsonObject {
     }
 
     private void validateUnknownFields() {
+        Collection<String> header = getHeader();
+        Collection<String> keys = getKeys();
+        Collection<String> uniqueFields = getUniqueFields();
+        Collection<String> nonKeys = getNonKeys();
         List<String> unknownFields = fieldNames()
                 .stream()
-                .filter(field -> !getHeader().contains(field))
-                .filter(field -> !getKeys().contains(field))
-                .filter(field -> !getUniqueFields().contains(field))
-                .filter(field -> !getNonKeys().contains(field))
+                .filter(field -> !header.contains(field))
+                .filter(field -> !keys.contains(field))
+                .filter(field -> !uniqueFields.contains(field))
+                .filter(field -> !nonKeys.contains(field))
                 .collect(Collectors.toList());
         if (!unknownFields.isEmpty()) {
             throw new IllegalArgumentException("Unknown fields in model: " + unknownFields.toString());
