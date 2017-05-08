@@ -33,7 +33,7 @@ public abstract class AbstractModel extends JsonObject {
     }
 
     protected void validateMissingFields() {
-        List<String> missingFields = Stream.of(getHeader(), getKeys(), getNonKeys())
+        List<String> missingFields = Stream.of(getHeader(), getKeys(), getUniqueFields(), getNonKeys())
                 .flatMap(Collection::stream)
                 .filter(field -> !containsKey(field))
                 .collect(Collectors.toList());
@@ -43,11 +43,16 @@ public abstract class AbstractModel extends JsonObject {
     }
 
     private void validateUnknownFields() {
+        Collection<String> header = getHeader();
+        Collection<String> keys = getKeys();
+        Collection<String> uniqueFields = getUniqueFields();
+        Collection<String> nonKeys = getNonKeys();
         List<String> unknownFields = fieldNames()
                 .stream()
-                .filter(field -> !getHeader().contains(field))
-                .filter(field -> !getKeys().contains(field))
-                .filter(field -> !getNonKeys().contains(field))
+                .filter(field -> !header.contains(field))
+                .filter(field -> !keys.contains(field))
+                .filter(field -> !uniqueFields.contains(field))
+                .filter(field -> !nonKeys.contains(field))
                 .collect(Collectors.toList());
         if (!unknownFields.isEmpty()) {
             throw new IllegalArgumentException("Unknown fields in model: " + unknownFields.toString());
@@ -55,6 +60,7 @@ public abstract class AbstractModel extends JsonObject {
     }
 
     public abstract Map<String, Class> getKeysDescriptor();
+    public abstract Map<String, Class> getUniqueFieldsDescriptor();
     public abstract Map<String, Class> getNonKeysDescriptor();
 
     public Collection<String> getHeader() {
@@ -63,6 +69,10 @@ public abstract class AbstractModel extends JsonObject {
 
     public Collection<String> getKeys() {
         return getKeysDescriptor().keySet();
+    }
+
+    public Collection<String> getUniqueFields() {
+        return getUniqueFieldsDescriptor().keySet();
     }
 
     public Collection<String> getNonKeys() {

@@ -345,6 +345,7 @@ public class MongoPersistenceServiceIT {
         JsonObject snapshotData = new JsonObject();
         model.stream()
                 .filter(entry -> !model.getKeys().contains(entry.getKey()))
+                .filter(entry -> !model.getUniqueFields().contains(entry.getKey()))
                 .forEach(entry -> snapshotData.put(entry.getKey(), entry.getValue()));
         context.assertEquals(snapshotData, snapshots.getJsonObject(position));
     }

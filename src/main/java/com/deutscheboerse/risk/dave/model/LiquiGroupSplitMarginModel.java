@@ -31,6 +31,11 @@ public class LiquiGroupSplitMarginModel extends AbstractModel {
     }
 
     @Override
+    public Map<String, Class> getUniqueFieldsDescriptor() {
+        return Collections.emptyMap();
+    }
+
+    @Override
     public Map<String, Class> getNonKeysDescriptor() {
         Map<String, Class<?>> nonKeys = new LinkedHashMap<>();
         nonKeys.put("premiumMargin", Double.class);

@@ -28,9 +28,16 @@ public class PoolMarginModel extends AbstractModel {
     }
 
     @Override
+    public Map<String, Class> getUniqueFieldsDescriptor() {
+        Map<String, Class<?>> uniqueFields = new LinkedHashMap<>();
+        uniqueFields.put("clrRptCurrency", String.class);
+        uniqueFields.put("poolOwner", String.class);
+        return Collections.unmodifiableMap(uniqueFields);
+    }
+
+    @Override
     public Map<String, Class> getNonKeysDescriptor() {
         Map<String, Class<?>> keys = new LinkedHashMap<>();
-        keys.put("clrRptCurrency", String.class);
         keys.put("requiredMargin", Double.class);
         keys.put("cashCollateralAmount", Double.class);
         keys.put("adjustedSecurities", Double.class);
@@ -39,7 +46,6 @@ public class PoolMarginModel extends AbstractModel {
         keys.put("overUnderInClrRptCurr", Double.class);
         keys.put("variPremInMarginCurr", Double.class);
         keys.put("adjustedExchangeRate", Double.class);
-        keys.put("poolOwner", String.class);
         return Collections.unmodifiableMap(keys);
     }
 }
