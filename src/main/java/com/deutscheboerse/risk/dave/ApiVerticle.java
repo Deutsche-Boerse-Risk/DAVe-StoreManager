@@ -7,6 +7,7 @@ import com.deutscheboerse.risk.dave.restapi.StoreApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpServer;
@@ -17,8 +18,11 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
+import io.vertx.core.net.TCPSSLOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.grpc.VertxServer;
+import io.vertx.grpc.VertxServerBuilder;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -121,10 +125,6 @@ public class ApiVerticle extends AbstractVerticle {
         LOG.info("Adding route REST API");
         router.route(String.format("%s/*", API_PREFIX)).handler(BodyHandler.create());
         
-        // Store API
-        StoreApi storeApi = new StoreApi(vertx);
-        router.post(String.format("%s/store/:model", API_PREFIX)).handler(storeApi::storeHandler);
-
         // Query API
         QueryApi queryApi = new QueryApi(vertx);
         router.get(String.format("%s/query/:model/latest", API_PREFIX)).handler(queryApi::queryLatestHandler);

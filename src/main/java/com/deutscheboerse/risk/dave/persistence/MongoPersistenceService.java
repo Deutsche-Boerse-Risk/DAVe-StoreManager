@@ -228,11 +228,13 @@ public class MongoPersistenceService implements PersistenceService {
         JsonObject document = new JsonObject();
         JsonObject setDocument = new JsonObject();
         JsonObject pushDocument = new JsonObject();
-        model.getKeys().forEach(key -> setDocument.put(key, model.getValue(key)));
-        model.getUniqueFields().forEach(uniqueField -> setDocument.put(uniqueField, model.getValue(uniqueField)));
+        Collection<String> keys = model.getKeys();
+        Collection<String> uniqueFields = model.getUniqueFields();
+        keys.forEach(key -> setDocument.put(key, model.getValue(key)));
+        uniqueFields.forEach(uniqueField -> setDocument.put(uniqueField, model.getValue(uniqueField)));
         model.stream()
-                .filter(entry -> !model.getKeys().contains(entry.getKey()))
-                .filter(entry -> !model.getUniqueFields().contains(entry.getKey()))
+                .filter(entry -> !keys.contains(entry.getKey()))
+                .filter(entry -> !uniqueFields.contains(entry.getKey()))
                 .forEach(entry -> pushDocument.put(entry.getKey(), entry.getValue()));
         document.put("$set", setDocument);
         document.put("$addToSet", new JsonObject().put("snapshots", pushDocument));

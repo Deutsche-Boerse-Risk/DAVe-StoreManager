@@ -9,4 +9,5 @@ services:
   - docker
 
 script:
-   - mvn -Ddocker.keepContainer -DskipTests=false -B clean verify coveralls:report
+   - mvn -Ddocker.keepContainer -DskipTests=false -DskipTests=true -B clean package coveralls:report
+   #- mvn -Ddocker.keepContainer -DskipTests=false -B clean verify coveralls:report

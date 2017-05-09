@@ -31,6 +31,7 @@ public class MainVerticle extends AbstractVerticle {
         this.retrieveConfig()
                 .compose(i -> deployPersistenceVerticle())
                 .compose(i -> deployApiVerticle())
+                .compose(i -> deployGrpcVerticle())
                 .compose(i -> deployHealthCheckVerticle())
                 .compose(chainFuture::complete, chainFuture);
 
@@ -87,6 +88,10 @@ public class MainVerticle extends AbstractVerticle {
 
     private Future<Void> deployApiVerticle() {
         return this.deployVerticle(ApiVerticle.class, this.configuration.getJsonObject(API_CONF_KEY, new JsonObject()), API_VERTICLE_INSTANCES);
+    }
+
+    private Future<Void> deployGrpcVerticle() {
+        return this.deployVerticle(GrpcVerticle.class, this.configuration.getJsonObject(API_CONF_KEY, new JsonObject()), API_VERTICLE_INSTANCES);
     }
 
     private Future<Void> deployHealthCheckVerticle() {
