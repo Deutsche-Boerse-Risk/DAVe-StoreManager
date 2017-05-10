@@ -3,7 +3,7 @@ package com.deutscheboerse.risk.dave.utils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
-public interface RestSender {
+public interface GrpcSender {
     void sendAllData(Handler<AsyncResult<Void>> handler);
     void sendAccountMarginData(Handler<AsyncResult<Void>> handler);
     void sendLiquiGroupMarginData(Handler<AsyncResult<Void>> handler);

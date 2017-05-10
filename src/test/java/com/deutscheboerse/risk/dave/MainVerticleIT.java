@@ -5,8 +5,8 @@ import com.deutscheboerse.risk.dave.log.TestAppender;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
-import com.deutscheboerse.risk.dave.utils.RestSender;
-import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
+import com.deutscheboerse.risk.dave.utils.GrpcSender;
+import com.deutscheboerse.risk.dave.utils.GrpcSenderRegular;
 import com.deutscheboerse.risk.dave.utils.TestConfig;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -70,8 +70,8 @@ public class MainVerticleIT {
     private void testStoreCommands(TestContext context) {
         DeploymentOptions options = createDeploymentOptions();
         MongoClient mongoClient = this.createMongoClient(options.getConfig().getJsonObject("mongo"));
-        final RestSender restSender = new RestSenderRegular(this.vertx);
-        restSender.sendAllData(context.asyncAssertSuccess());
+        final GrpcSender grpcSender = new GrpcSenderRegular(this.vertx);
+        grpcSender.sendAllData(context.asyncAssertSuccess());
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(AccountMarginModel.class), ACCOUNT_MARGIN_COUNT);
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), LIQUI_GROUP_MARGIN_COUNT);
         this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), LIQUI_GROUP_SPLIT_MARGIN_COUNT);

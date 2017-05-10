@@ -29,7 +29,8 @@
  import java.util.stream.Collectors;
  import java.util.stream.IntStream;
 
- @RunWith(VertxUnitRunner.class)
+@RunWith(VertxUnitRunner.class)
+@Ignore
 public class MongoPersistenceServiceIT {
     private static final TestAppender testAppender = TestAppender.getAppender(MongoPersistenceService.class);
     private static final Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);

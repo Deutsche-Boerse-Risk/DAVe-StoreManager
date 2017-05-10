@@ -31,6 +31,12 @@ public class GrpcVerticle extends AbstractVerticle {
     private VertxServer server;
     private ApiConfig config;
 
+    static {
+        // Disable grpc info logs
+        java.util.logging.Logger grpcLogger = java.util.logging.Logger.getLogger("io.grpc");
+        grpcLogger.setLevel(java.util.logging.Level.WARNING);
+    }
+
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         LOG.info("Starting {} with configuration: {}", GrpcVerticle.class.getSimpleName(), hideCertificates(config()).encodePrettily());

@@ -1,7 +1,7 @@
 package com.deutscheboerse.risk.dave.utils;
 
-import com.deutscheboerse.risk.dave.MainVerticleIT;
-import com.deutscheboerse.risk.dave.model.AbstractModel;
+import com.deutscheboerse.risk.dave.*;
+import com.deutscheboerse.risk.dave.model.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -79,6 +79,147 @@ public class DataHelper {
         model.getKeys().forEach(key -> queryParams.put(key, model.getValue(key)));
         model.getUniqueFields().forEach(uniqueField -> queryParams.put(uniqueField, model.getValue(uniqueField)));
         return queryParams;
+    }
+
+    public static AccountMargin getAccountMarginGrpcFromJson(JsonObject json) {
+        return AccountMargin.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setAccount(json.getString("account"))
+                .setMarginCurrency(json.getString("marginCurrency"))
+                .setClearingCurrency(json.getString("clearingCurrency"))
+                .setPool(json.getString("pool"))
+                .setMarginReqInMarginCurr(json.getDouble("marginReqInMarginCurr"))
+                .setMarginReqInClrCurr(json.getDouble("marginReqInClrCurr"))
+                .setUnadjustedMarginRequirement(json.getDouble("unadjustedMarginRequirement"))
+                .setVariationPremiumPayment(json.getDouble("variationPremiumPayment"))
+                .build();
+    }
+
+    public static LiquiGroupMargin getLiquiGroupMarginGrpcFromJson(JsonObject json) {
+        return LiquiGroupMargin.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setAccount(json.getString("account"))
+                .setMarginClass(json.getString("marginClass"))
+                .setMarginCurrency(json.getString("marginCurrency"))
+                .setMarginGroup(json.getString("marginGroup"))
+                .setPremiumMargin(json.getDouble("premiumMargin"))
+                .setCurrentLiquidatingMargin(json.getDouble("currentLiquidatingMargin"))
+                .setFuturesSpreadMargin(json.getDouble("futuresSpreadMargin"))
+                .setAdditionalMargin(json.getDouble("additionalMargin"))
+                .setUnadjustedMarginRequirement(json.getDouble("unadjustedMarginRequirement"))
+                .setVariationPremiumPayment(json.getDouble("variationPremiumPayment"))
+                .build();
+    }
+
+    public static LiquiGroupSplitMargin getLiquiGroupSplitMarginGrpcFromJson(JsonObject json) {
+        return LiquiGroupSplitMargin.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setAccount(json.getString("account"))
+                .setLiquidationGroup(json.getString("liquidationGroup"))
+                .setLiquidationGroupSplit(json.getString("liquidationGroupSplit"))
+                .setMarginCurrency(json.getString("marginCurrency"))
+                .setPremiumMargin(json.getDouble("premiumMargin"))
+                .setMarketRisk(json.getDouble("marketRisk"))
+                .setLiquRisk(json.getDouble("liquRisk"))
+                .setLongOptionCredit(json.getDouble("longOptionCredit"))
+                .setVariationPremiumPayment(json.getDouble("variationPremiumPayment"))
+                .build();
+    }
+
+    public static PoolMargin getPoolMarginGrpcFromJson(JsonObject json) {
+        return PoolMargin.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setPool(json.getString("pool"))
+                .setMarginCurrency(json.getString("marginCurrency"))
+                .setClrRptCurrency(json.getString("clrRptCurrency"))
+                .setRequiredMargin(json.getDouble("requiredMargin"))
+                .setCashCollateralAmount(json.getDouble("cashCollateralAmount"))
+                .setAdjustedSecurities(json.getDouble("adjustedSecurities"))
+                .setAdjustedGuarantee(json.getDouble("adjustedGuarantee"))
+                .setOverUnderInMarginCurr(json.getDouble("overUnderInMarginCurr"))
+                .setOverUnderInClrRptCurr(json.getDouble("overUnderInClrRptCurr"))
+                .setVariPremInMarginCurr(json.getDouble("variPremInMarginCurr"))
+                .setAdjustedExchangeRate(json.getDouble("adjustedExchangeRate"))
+                .setPoolOwner(json.getString("poolOwner"))
+                .build();
+    }
+
+    public static PositionReport getPositionReportGrpcFromJson(JsonObject json) {
+        return PositionReport.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setAccount(json.getString("account"))
+                .setLiquidationGroup(json.getString("liquidationGroup"))
+                .setLiquidationGroupSplit(json.getString("liquidationGroupSplit"))
+                .setProduct(json.getString("product"))
+                .setCallPut(json.getString("callPut"))
+                .setContractYear(json.getInteger("contractYear"))
+                .setContractMonth(json.getInteger("contractMonth"))
+                .setExpiryDay(json.getInteger("expiryDay"))
+                .setExercisePrice(json.getDouble("exercisePrice"))
+                .setVersion(json.getString("version"))
+                .setFlexContractSymbol(json.getString("flexContractSymbol"))
+                .setNetQuantityLs(json.getDouble("netQuantityLs"))
+                .setNetQuantityEa(json.getDouble("netQuantityEa"))
+                .setClearingCurrency(json.getString("clearingCurrency"))
+                .setMVar(json.getDouble("mVar"))
+                .setCompVar(json.getDouble("compVar"))
+                .setCompCorrelationBreak(json.getDouble("compCorrelationBreak"))
+                .setCompCompressionError(json.getDouble("compCompressionError"))
+                .setCompLiquidityAddOn(json.getDouble("compLiquidityAddOn"))
+                .setCompLongOptionCredit(json.getDouble("compLongOptionCredit"))
+                .setProductCurrency(json.getString("productCurrency"))
+                .setVariationPremiumPayment(json.getDouble("variationPremiumPayment"))
+                .setPremiumMargin(json.getDouble("premiumMargin"))
+                .setNormalizedDelta(json.getDouble("normalizedDelta"))
+                .setNormalizedGamma(json.getDouble("normalizedGamma"))
+                .setNormalizedVega(json.getDouble("normalizedVega"))
+                .setNormalizedRho(json.getDouble("normalizedRho"))
+                .setNormalizedTheta(json.getDouble("normalizedTheta"))
+                .setUnderlying(json.getString("underlying"))
+                .build();
+    }
+
+    public static RiskLimitUtilization getRiskLimitUtilizationGrpcFromJson(JsonObject json) {
+        RiskLimitUtilization.Builder builder = RiskLimitUtilization.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setMaintainer(json.getString("maintainer"))
+                .setLimitType(json.getString("limitType"))
+                .setUtilization(json.getDouble("utilization"));
+
+        if (json.containsKey("warningLevel")) {
+            builder.setWarningLevel(json.getDouble("warningLevel"));
+        }
+        if (json.containsKey("throttleLevel")) {
+            builder.setThrottleLevel(json.getDouble("throttleLevel"));
+        }
+        if (json.containsKey("rejectLevel")) {
+            builder.setRejectLevel(json.getDouble("rejectLevel"));
+        }
+
+        return builder.build();
     }
 
 }
