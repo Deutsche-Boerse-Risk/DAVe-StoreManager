@@ -3,6 +3,7 @@ package com.deutscheboerse.risk.dave.restapi;
 import com.deutscheboerse.risk.dave.*;
 import com.deutscheboerse.risk.dave.model.*;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
+import com.google.protobuf.MessageLite;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -15,6 +16,8 @@ import io.vertx.serviceproxy.ProxyHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 public class StoreApi {
     private static final Logger LOG = LoggerFactory.getLogger(StoreApi.class);
@@ -30,78 +33,41 @@ public class StoreApi {
     }
 
     public void storeAccountMargin(GrpcReadStream<AccountMargin> request, Future<StoreReply> response) {
-        List<AccountMarginModel> models = new ArrayList<>();
-        request.handler(payload -> {
-            AccountMarginModel model = this.getAccountMarginModelFromGpb(payload);
-            model.validate();
-            models.add(model);
-        }).endHandler(v -> {
-            this.persistenceProxy.storeAccountMargin(models, this.getResponseHandler(response));
-        }).exceptionHandler(t -> {
-            response.fail(t);
-        });
+        store(request, response, this::getAccountMarginModelFromGpb, this.persistenceProxy::storeAccountMargin);
     }
 
     public void storeLiquiGroupMargin(GrpcReadStream<LiquiGroupMargin> request, Future<StoreReply> response) {
-        List<LiquiGroupMarginModel> models = new ArrayList<>();
-        request.handler(payload -> {
-            LiquiGroupMarginModel model = this.getLiquiGroupMarginModelFromGpb(payload);
-            model.validate();
-            models.add(model);
-        }).endHandler(v -> {
-            this.persistenceProxy.storeLiquiGroupMargin(models, this.getResponseHandler(response));
-        }).exceptionHandler(t -> {
-            response.fail(t);
-        });
+        store(request, response, this::getLiquiGroupMarginModelFromGpb, this.persistenceProxy::storeLiquiGroupMargin);
     }
 
     public void storeLiquiGroupSplitMargin(GrpcReadStream<LiquiGroupSplitMargin> request, Future<StoreReply> response) {
-        List<LiquiGroupSplitMarginModel> models = new ArrayList<>();
-        request.handler(payload -> {
-            LiquiGroupSplitMarginModel model = this.getLiquiGroupSplitMarginModelFromGpb(payload);
-            model.validate();
-            models.add(model);
-        }).endHandler(v -> {
-            this.persistenceProxy.storeLiquiGroupSplitMargin(models, this.getResponseHandler(response));
-        }).exceptionHandler(t -> {
-            response.fail(t);
-        });
+        store(request, response, this::getLiquiGroupSplitMarginModelFromGpb, this.persistenceProxy::storeLiquiGroupSplitMargin);
     }
 
     public void storePoolMargin(GrpcReadStream<PoolMargin> request, Future<StoreReply> response) {
-        List<PoolMarginModel> models = new ArrayList<>();
-        request.handler(payload -> {
-            PoolMarginModel model = this.getPoolMarginModelFromGpb(payload);
-            model.validate();
-            models.add(model);
-        }).endHandler(v -> {
-            this.persistenceProxy.storePoolMargin(models, this.getResponseHandler(response));
-        }).exceptionHandler(t -> {
-            response.fail(t);
-        });
+        store(request, response, this::getPoolMarginModelFromGpb, this.persistenceProxy::storePoolMargin);
     }
 
     public void storePositionReport(GrpcReadStream<PositionReport> request, Future<StoreReply> response) {
-        List<PositionReportModel> models = new ArrayList<>();
-        request.handler(payload -> {
-            PositionReportModel model = this.getPositionReportModelFromGpb(payload);
-            model.validate();
-            models.add(model);
-        }).endHandler(v -> {
-            this.persistenceProxy.storePositionReport(models, this.getResponseHandler(response));
-        }).exceptionHandler(t -> {
-            response.fail(t);
-        });
+        store(request, response, this::getPositionReportModelFromGpb, this.persistenceProxy::storePositionReport);
     }
 
     public void storeRiskLimitUtilization(GrpcReadStream<RiskLimitUtilization> request, Future<StoreReply> response) {
-        List<RiskLimitUtilizationModel> models = new ArrayList<>();
+        store(request, response, this::getRiskLimitUtilizationModelFromGpb, this.persistenceProxy::storeRiskLimitUtilization);
+    }
+
+    private <T extends MessageLite, U extends AbstractModel>
+    void store(GrpcReadStream<T> request,
+               Future<StoreReply> response,
+               Function<T, U> convertFromGpb,
+               BiConsumer<List<U>, Handler<AsyncResult<Void>>> storeModel) {
+        List<U> models = new ArrayList<>();
         request.handler(payload -> {
-            RiskLimitUtilizationModel model = this.getRiskLimitUtilizationModelFromGpb(payload);
+            U model = convertFromGpb.apply(payload);
             model.validate();
             models.add(model);
         }).endHandler(v -> {
-            this.persistenceProxy.storeRiskLimitUtilization(models, this.getResponseHandler(response));
+            storeModel.accept(models, getResponseHandler(response));
         }).exceptionHandler(t -> {
             response.fail(t);
         });
