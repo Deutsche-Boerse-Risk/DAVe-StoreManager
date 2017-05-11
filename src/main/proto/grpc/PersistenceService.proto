@@ -12,6 +12,13 @@ service PersistenceService {
     rpc storePoolMargin            (stream PoolMargin)            returns (StoreReply) {}
     rpc storePositionReport        (stream PositionReport)        returns (StoreReply) {}
     rpc storeRiskLimitUtilization  (stream RiskLimitUtilization)  returns (StoreReply) {}
+
+    rpc queryAccountMargin         (AccountMarginQuery)           returns (stream AccountMargin) {}
+    rpc queryLiquiGroupMargin      (LiquiGroupMarginQuery)        returns (stream LiquiGroupMargin) {}
+    rpc queryLiquiGroupSplitMargin (LiquiGroupSplitMarginQuery)   returns (stream LiquiGroupSplitMargin) {}
+    rpc queryPoolMargin            (PoolMarginQuery)              returns (stream PoolMargin) {}
+    rpc queryPositionReport        (PositionReportQuery)          returns (stream PositionReport) {}
+    rpc queryRiskLimitUtilization  (RiskLimitUtilizationQuery)    returns (stream RiskLimitUtilization) {}
 }
 
 message AccountMargin {
@@ -133,6 +140,73 @@ message RiskLimitUtilization {
     double warning_level                 =  9;
     double throttle_level                = 10;
     double reject_level                  = 11;
+}
+
+message AccountMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string margin_currency               =  5;
+    string clearing_currency             =  6;
+    string pool                          =  7;
+}
+
+message LiquiGroupMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string margin_class                  =  5;
+    string margin_currency               =  6;
+    string margin_group                  =  7;
+}
+
+message LiquiGroupSplitMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string liquidation_group             =  5;
+    string liquidation_group_split       =  6;
+    string margin_currency               =  7;
+}
+
+message PoolMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string pool                          =  3;
+    string margin_currency               =  4;
+    string clr_rpt_currency              =  5;
+    string pool_owner                    =  6;
+}
+
+message PositionReportQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string liquidation_group             =  5;
+    string liquidation_group_split       =  6;
+    string product                       =  7;
+    string call_put                      =  8;
+    int32  contract_year                 =  9;
+    int32  contract_month                = 10;
+    int32  expiry_day                    = 11;
+    double exercise_price                = 12;
+    string version                       = 13;
+    string flex_contract_symbol          = 14;
+    string clearing_currency             = 15;
+    string product_currency              = 16;
+    string underlying                    = 17;
+}
+
+message RiskLimitUtilizationQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string maintainer                    =  4;
+    string limit_type                    =  5;
 }
 
 message StoreReply {
