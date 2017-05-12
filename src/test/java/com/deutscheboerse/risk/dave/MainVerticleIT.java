@@ -3,7 +3,6 @@ package com.deutscheboerse.risk.dave;
 import ch.qos.logback.classic.Logger;
 import com.deutscheboerse.risk.dave.log.TestAppender;
 import com.deutscheboerse.risk.dave.model.*;
-import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import com.deutscheboerse.risk.dave.utils.GrpcSender;
 import com.deutscheboerse.risk.dave.utils.GrpcSenderRegular;
@@ -72,12 +71,12 @@ public class MainVerticleIT {
         MongoClient mongoClient = this.createMongoClient(options.getConfig().getJsonObject("mongo"));
         final GrpcSender grpcSender = new GrpcSenderRegular(this.vertx);
         grpcSender.sendAllData(context.asyncAssertSuccess());
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(AccountMarginModel.class), ACCOUNT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), LIQUI_GROUP_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), LIQUI_GROUP_SPLIT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(PoolMarginModel.class), POOL_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(PositionReportModel.class), POSITION_REPORT_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), RISK_LIMIT_UTILIZATION_COUNT);
+        this.testCountInCollection(context, mongoClient, AccountMarginModel.getMongoModelDescriptor().getCollectionName(), ACCOUNT_MARGIN_COUNT);
+        this.testCountInCollection(context, mongoClient, LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_MARGIN_COUNT);
+        this.testCountInCollection(context, mongoClient, LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_SPLIT_MARGIN_COUNT);
+        this.testCountInCollection(context, mongoClient, PoolMarginModel.getMongoModelDescriptor().getCollectionName(), POOL_MARGIN_COUNT);
+        this.testCountInCollection(context, mongoClient, PositionReportModel.getMongoModelDescriptor().getCollectionName(), POSITION_REPORT_COUNT);
+        this.testCountInCollection(context, mongoClient, RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName(), RISK_LIMIT_UTILIZATION_COUNT);
     }
 
 //    private void testQueryCommands(TestContext context) {

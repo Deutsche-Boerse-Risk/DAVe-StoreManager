@@ -2,6 +2,7 @@ package com.deutscheboerse.risk.dave;
 
 import com.deutscheboerse.risk.dave.config.ApiConfig;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
+import com.deutscheboerse.risk.dave.restapi.QueryApi;
 import com.deutscheboerse.risk.dave.restapi.StoreApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
@@ -15,6 +16,7 @@ import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.TCPSSLOptions;
 import io.vertx.grpc.GrpcReadStream;
+import io.vertx.grpc.GrpcWriteStream;
 import io.vertx.grpc.VertxServer;
 import io.vertx.grpc.VertxServerBuilder;
 
@@ -72,7 +74,7 @@ public class GrpcVerticle extends AbstractVerticle {
         int port = config.getPort();
 
         this.server = VertxServerBuilder
-                .forPort(vertx, port + 1)
+                .forPort(vertx, port)
                 .useSsl(this::setSslOptions)
                 .addService(this.getService())
                 .build();
@@ -104,6 +106,7 @@ public class GrpcVerticle extends AbstractVerticle {
     private PersistenceServiceGrpc.PersistenceServiceVertxImplBase getService() {
         return new PersistenceServiceGrpc.PersistenceServiceVertxImplBase() {
             private StoreApi storeApi = new StoreApi(vertx);
+            private QueryApi queryApi = new QueryApi(vertx);
 
             @Override
             public void storeAccountMargin(GrpcReadStream<AccountMargin> request, Future<StoreReply> response) {
@@ -133,6 +136,36 @@ public class GrpcVerticle extends AbstractVerticle {
             @Override
             public void storeRiskLimitUtilization(GrpcReadStream<RiskLimitUtilization> request, Future<StoreReply> response) {
                 storeApi.storeRiskLimitUtilization(request, response);
+            }
+
+            @Override
+            public void queryAccountMargin(AccountMarginQuery request, GrpcWriteStream<AccountMargin> response) {
+                queryApi.queryAccountMargin(request, response);
+            }
+
+            @Override
+            public void queryLiquiGroupMargin(LiquiGroupMarginQuery request, GrpcWriteStream<LiquiGroupMargin> response) {
+                queryApi.queryLiquiGroupMargin(request, response);
+            }
+
+            @Override
+            public void queryLiquiGroupSplitMargin(LiquiGroupSplitMarginQuery request, GrpcWriteStream<LiquiGroupSplitMargin> response) {
+                queryApi.queryLiquiGroupSplitMargin(request, response);
+            }
+
+            @Override
+            public void queryPoolMargin(PoolMarginQuery request, GrpcWriteStream<PoolMargin> response) {
+                queryApi.queryPoolMargin(request, response);
+            }
+
+            @Override
+            public void queryPositionReport(PositionReportQuery request, GrpcWriteStream<PositionReport> response) {
+                queryApi.queryPositionReport(request, response);
+            }
+
+            @Override
+            public void queryRiskLimitUtilization(RiskLimitUtilizationQuery request, GrpcWriteStream<RiskLimitUtilization> response) {
+                queryApi.queryRiskLimitUtilization(request, response);
             }
         };
     }

@@ -4,7 +4,6 @@ import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
 import io.vertx.core.*;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -18,19 +17,19 @@ import io.vertx.serviceproxy.ServiceException;
 import javax.inject.Inject;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
 
     private static final int RECONNECT_DELAY = 2000;
-    static final String ACCOUNT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(AccountMarginModel.class);
-    static final String LIQUI_GROUP_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class);
-    static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class);
-    static final String POOL_MARGIN_COLLECTION = MongoPersistenceService.getCollectionName(PoolMarginModel.class);
-    static final String POSITION_REPORT_COLLECTION = MongoPersistenceService.getCollectionName(PositionReportModel.class);
-    static final String RISK_LIMIT_UTILIZATION_COLLECTION = MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class);
+    static final String ACCOUNT_MARGIN_COLLECTION = AccountMarginModel.getMongoModelDescriptor().getCollectionName();
+    static final String LIQUI_GROUP_MARGIN_COLLECTION = LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName();
+    static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName();
+    static final String POOL_MARGIN_COLLECTION = PoolMarginModel.getMongoModelDescriptor().getCollectionName();
+    static final String POSITION_REPORT_COLLECTION = PositionReportModel.getMongoModelDescriptor().getCollectionName();
+    static final String RISK_LIMIT_UTILIZATION_COLLECTION = RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName();
 
     private final Vertx vertx;
     private final MongoClient mongo;
@@ -96,38 +95,39 @@ public class MongoPersistenceService implements PersistenceService {
     }
 
     @Override
-    public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, ACCOUNT_MARGIN_COLLECTION, query, new AccountMarginModel(), resultHandler);
+    public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<AccountMarginModel>>> resultHandler) {
+        this.query(type, ACCOUNT_MARGIN_COLLECTION, query, AccountMarginModel.getMongoModelDescriptor(), AccountMarginModel::buildFromJson, resultHandler);
     }
 
     @Override
-    public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, LIQUI_GROUP_MARGIN_COLLECTION, query, new LiquiGroupMarginModel(), resultHandler);
+    public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupMarginModel>>> resultHandler) {
+        this.query(type, LIQUI_GROUP_MARGIN_COLLECTION, query, LiquiGroupMarginModel.getMongoModelDescriptor(), LiquiGroupMarginModel::buildFromJson, resultHandler);
     }
 
     @Override
-    public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, new LiquiGroupSplitMarginModel(), resultHandler);
+    public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupSplitMarginModel>>> resultHandler) {
+        this.query(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, LiquiGroupSplitMarginModel.getMongoModelDescriptor(), LiquiGroupSplitMarginModel::buildFromJson, resultHandler);
     }
 
     @Override
-    public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, POOL_MARGIN_COLLECTION, query, new PoolMarginModel(), resultHandler);
+    public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<PoolMarginModel>>> resultHandler) {
+        this.query(type, POOL_MARGIN_COLLECTION, query, PoolMarginModel.getMongoModelDescriptor(), PoolMarginModel::buildFromJson, resultHandler);
     }
 
     @Override
-    public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, POSITION_REPORT_COLLECTION, query, new PositionReportModel(), resultHandler);
+    public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<List<PositionReportModel>>> resultHandler) {
+        this.query(type, POSITION_REPORT_COLLECTION, query, PositionReportModel.getMongoModelDescriptor(), PositionReportModel::buildFromJson, resultHandler);
     }
 
     @Override
-    public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
-        this.query(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, new RiskLimitUtilizationModel(), resultHandler);
+    public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<List<RiskLimitUtilizationModel>>> resultHandler) {
+        this.query(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, RiskLimitUtilizationModel.getMongoModelDescriptor(), RiskLimitUtilizationModel::buildFromJson, resultHandler);
     }
 
-    private void query(RequestType type, String collection, JsonObject query, AbstractModel model, Handler<AsyncResult<String>> resultHandler) {
+    private <T>
+    void query(RequestType type, String collection, JsonObject query, MongoModelDescriptor modelDescriptor, Function<JsonObject, T> modelFactory, Handler<AsyncResult<List<T>>> resultHandler) {
         LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
-        BiFunction<JsonObject, AbstractModel, JsonArray> getPipeline;
+        BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline;
         switch(type) {
             case LATEST:
                 getPipeline = MongoPersistenceService::getLatestPipeline;
@@ -140,9 +140,13 @@ public class MongoPersistenceService implements PersistenceService {
                 resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unknown request type"));
                 return;
         }
-        mongo.runCommand("aggregate", MongoPersistenceService.getCommand(collection, query, model, getPipeline), res -> {
+        mongo.runCommand("aggregate", MongoPersistenceService.getCommand(collection, query, modelDescriptor, getPipeline), res -> {
             if (res.succeeded()) {
-                resultHandler.handle(Future.succeededFuture(Json.encodePrettily(res.result().getJsonArray("result"))));
+                List<T> result = res.result().getJsonArray("result").stream()
+                        .map(json -> (JsonObject) json)
+                        .map(modelFactory)
+                        .collect(Collectors.toList());
+                resultHandler.handle(Future.succeededFuture(result));
             } else {
                 LOG.error("{} query failed", collection, res.cause());
                 connectionManager.startReconnection();
@@ -152,45 +156,42 @@ public class MongoPersistenceService implements PersistenceService {
 
     }
 
-    private static JsonObject getCommand(String collection, JsonObject params, AbstractModel model, BiFunction<JsonObject, AbstractModel, JsonArray> getPipeline) {
+    private static JsonObject getCommand(String collection, JsonObject params, MongoModelDescriptor modelDescriptor, BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline) {
         return new JsonObject()
                 .put("aggregate", collection)
-                .put("pipeline", getPipeline.apply(params, model))
+                .put("pipeline", getPipeline.apply(params, modelDescriptor))
                 .put("allowDiskUse", true);
     }
 
-    private static JsonArray getLatestPipeline(JsonObject params, AbstractModel model) {
+    private static JsonArray getLatestPipeline(JsonObject params, MongoModelDescriptor modelDescriptor) {
         JsonArray pipeline = new JsonArray();
         pipeline.add(new JsonObject().put("$match", params));
-        pipeline.add(new JsonObject().put("$project", getLatestSnapshotProject(model)));
+        pipeline.add(new JsonObject().put("$project", getLatestSnapshotProject(modelDescriptor)));
         pipeline.add(new JsonObject().put("$unwind", "$snapshots"));
-        pipeline.add(new JsonObject().put("$project", getFlattenProject(model)));
+        pipeline.add(new JsonObject().put("$project", getFlattenProject(modelDescriptor)));
         return pipeline;
     }
 
-    private static JsonArray getHistoryPipeline(JsonObject params, AbstractModel model) {
+    private static JsonArray getHistoryPipeline(JsonObject params, MongoModelDescriptor modelDescriptor) {
         JsonArray pipeline = new JsonArray();
         pipeline.add(new JsonObject().put("$match", params));
         pipeline.add(new JsonObject().put("$unwind", "$snapshots"));
-        pipeline.add(new JsonObject().put("$project", getFlattenProject(model)));
+        pipeline.add(new JsonObject().put("$project", getFlattenProject(modelDescriptor)));
         return pipeline;
     }
 
-    private static JsonObject getLatestSnapshotProject(AbstractModel model) {
+    private static JsonObject getLatestSnapshotProject(MongoModelDescriptor modelDescriptor) {
         JsonObject project = new JsonObject();
-        model.getKeys().forEach(key -> project.put(key, 1));
-        model.getUniqueFields().forEach(uniqueField -> project.put(uniqueField, 1));
+        modelDescriptor.getCommonFields().forEach(field -> project.put(field, 1));
         project.put("snapshots", new JsonObject().put("$slice", new JsonArray().add("$snapshots").add(-1)));
         return project;
     }
 
-    private static JsonObject getFlattenProject(AbstractModel model) {
+    private static JsonObject getFlattenProject(MongoModelDescriptor modelDescriptor) {
         JsonObject project = new JsonObject();
         project.put("_id", 0);
-        model.getKeys().forEach(key -> project.put(key, 1));
-        model.getUniqueFields().forEach(uniqueField -> project.put(uniqueField, 1));
-        model.getNonKeys().forEach(nonKey -> project.put(nonKey, "$snapshots." + nonKey));
-        model.getHeader().forEach(header -> project.put(header, "$snapshots." + header));
+        modelDescriptor.getCommonFields().forEach(field -> project.put(field, 1));
+        modelDescriptor.getSnapshotFields().forEach(field -> project.put(field, "$snapshots." + field));
         return project;
     }
 
@@ -200,7 +201,7 @@ public class MongoPersistenceService implements PersistenceService {
         this.mongo.close();
     }
 
-    private void store(Collection<? extends AbstractModel> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
+    private void store(Collection<? extends Model> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
@@ -211,62 +212,26 @@ public class MongoPersistenceService implements PersistenceService {
         });
     }
 
-    private static JsonObject getQueryParams(AbstractModel model) {
-        JsonObject queryParams = new JsonObject();
-        model.getKeys().forEach(key -> queryParams.put(key, model.getValue(key)));
-        model.getUniqueFields().forEach(uniqueField -> queryParams.put(uniqueField, model.getValue(uniqueField)));
-        return queryParams;
-    }
-
-    static JsonObject getUniqueIndex(AbstractModel model) {
-        JsonObject uniqueIndex = new JsonObject();
-        model.getKeys().forEach(key -> uniqueIndex.put(key, 1));
-        return uniqueIndex;
-    }
-
-    private static JsonObject getStoreDocument(AbstractModel model) {
-        JsonObject document = new JsonObject();
-        JsonObject setDocument = new JsonObject();
-        JsonObject pushDocument = new JsonObject();
-        Collection<String> keys = model.getKeys();
-        Collection<String> uniqueFields = model.getUniqueFields();
-        keys.forEach(key -> setDocument.put(key, model.getValue(key)));
-        uniqueFields.forEach(uniqueField -> setDocument.put(uniqueField, model.getValue(uniqueField)));
-        model.stream()
-                .filter(entry -> !keys.contains(entry.getKey()))
-                .filter(entry -> !uniqueFields.contains(entry.getKey()))
-                .forEach(entry -> pushDocument.put(entry.getKey(), entry.getValue()));
-        document.put("$set", setDocument);
-        document.put("$addToSet", new JsonObject().put("snapshots", pushDocument));
-        return document;
-    }
-
-    public static String getCollectionName(Class<? extends AbstractModel> clazz) {
-        return clazz.getSimpleName().replace("Model", "");
-    }
-
     static Collection<String> getRequiredCollections() {
         List<String> neededCollections = new ArrayList<>(Arrays.asList(
-                MongoPersistenceService.getCollectionName(AccountMarginModel.class),
-                MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class),
-                MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class),
-                MongoPersistenceService.getCollectionName(PoolMarginModel.class),
-                MongoPersistenceService.getCollectionName(PositionReportModel.class),
-                MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class)
+                ACCOUNT_MARGIN_COLLECTION,
+                LIQUI_GROUP_MARGIN_COLLECTION,
+                LIQUI_GROUP_SPLIT_MARGIN_COLLECTION,
+                POOL_MARGIN_COLLECTION,
+                POSITION_REPORT_COLLECTION,
+                RISK_LIMIT_UTILIZATION_COLLECTION
         ));
         return Collections.unmodifiableList(neededCollections);
     }
 
-    private Future<Void> storeIntoCollection(Collection<? extends AbstractModel> models, String collection) {
+    private Future<Void> storeIntoCollection(Collection<? extends Model> models, String collection) {
         List<Future> futureList = new ArrayList<>();
         models.forEach(model -> {
             Future<MongoClientUpdateResult> future = Future.future();
-            JsonObject queryParams = MongoPersistenceService.getQueryParams(model);
-            JsonObject document = MongoPersistenceService.getStoreDocument(model);
-            LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
+            LOG.trace("Storing message into {} with body {}", collection, model.toJson());
             mongo.updateCollectionWithOptions(collection,
-                    queryParams,
-                    document,
+                    model.getMongoQueryParams(),
+                    model.getMongoStoreDocument(),
                     new UpdateOptions().setUpsert(true),
                     future);
             futureList.add(future);
@@ -324,18 +289,16 @@ public class MongoPersistenceService implements PersistenceService {
 
         List<Future> futs = new ArrayList<>();
         Arrays.asList(
-                new AccountMarginModel(),
-                new LiquiGroupMarginModel(),
-                new LiquiGroupSplitMarginModel(),
-                new PoolMarginModel(),
-                new PositionReportModel(),
-                new RiskLimitUtilizationModel()
+                AccountMarginModel.getMongoModelDescriptor(),
+                LiquiGroupMarginModel.getMongoModelDescriptor(),
+                LiquiGroupSplitMarginModel.getMongoModelDescriptor(),
+                PoolMarginModel.getMongoModelDescriptor(),
+                PositionReportModel.getMongoModelDescriptor(),
+                RiskLimitUtilizationModel.getMongoModelDescriptor()
         ).forEach(model -> {
-            String collectionName = MongoPersistenceService.getCollectionName(model.getClass());
-            JsonObject index = MongoPersistenceService.getUniqueIndex(model);
             IndexOptions indexOptions = new IndexOptions().name("unique_idx").unique(true);
             Future<Void> indexFuture = Future.future();
-            mongo.createIndexWithOptions(collectionName, index, indexOptions, indexFuture);
+            mongo.createIndexWithOptions(model.getCollectionName(), model.getIndex(), indexOptions, indexFuture);
             futs.add(indexFuture);
         });
 

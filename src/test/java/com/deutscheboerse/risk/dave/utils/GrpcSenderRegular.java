@@ -2,6 +2,7 @@ package com.deutscheboerse.risk.dave.utils;
 
 import com.deutscheboerse.risk.dave.PersistenceServiceGrpc;
 import com.deutscheboerse.risk.dave.StoreReply;
+import com.deutscheboerse.risk.dave.model.*;
 import com.google.protobuf.MessageLite;
 import io.grpc.ManagedChannel;
 import io.vertx.core.*;
@@ -66,32 +67,32 @@ public class GrpcSenderRegular implements GrpcSender {
 
     public void sendAccountMarginData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeAccountMargin, DataHelper::getAccountMarginGrpcFromJson, DataHelper.ACCOUNT_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeAccountMargin, AccountMarginModel::buildFromJson, DataHelper.ACCOUNT_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     public void sendLiquiGroupMarginData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeLiquiGroupMargin, DataHelper::getLiquiGroupMarginGrpcFromJson, DataHelper.LIQUI_GROUP_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeLiquiGroupMargin, LiquiGroupMarginModel::buildFromJson, DataHelper.LIQUI_GROUP_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     public void sendLiquiGroupSplitMarginData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeLiquiGroupSplitMargin, DataHelper::getLiquiGroupSplitMarginGrpcFromJson, DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeLiquiGroupSplitMargin, LiquiGroupSplitMarginModel::buildFromJson, DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     public void sendPoolMarginData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storePoolMargin, DataHelper::getPoolMarginGrpcFromJson, DataHelper.POOL_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storePoolMargin, PoolMarginModel::buildFromJson, DataHelper.POOL_MARGIN_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     public void sendPositionReportData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storePositionReport, DataHelper::getPositionReportGrpcFromJson, DataHelper.POSITION_REPORT_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storePositionReport, PositionReportModel::buildFromJson, DataHelper.POSITION_REPORT_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     public void sendRiskLimitUtilizationData(Handler<AsyncResult<Void>> handler) {
         ManagedChannel channel = this.createGrpcChannel();
-        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeRiskLimitUtilization, DataHelper::getRiskLimitUtilizationGrpcFromJson, DataHelper.RISK_LIMIT_UTILIZATION_FOLDER).setHandler(this.getResponseHandler(handler));
+        this.sendData(channel, PersistenceServiceGrpc.newVertxStub(channel)::storeRiskLimitUtilization, RiskLimitUtilizationModel::buildFromJson, DataHelper.RISK_LIMIT_UTILIZATION_FOLDER).setHandler(this.getResponseHandler(handler));
     }
 
     private Handler<AsyncResult<Void>> getResponseHandler(Handler<AsyncResult<Void>> handler) {
@@ -105,7 +106,7 @@ public class GrpcSenderRegular implements GrpcSender {
     }
 
     private <U extends MessageLite>
-    Future<Void> sendData(ManagedChannel channel, Consumer<Handler<GrpcUniExchange<U, StoreReply>>> storeFunction, Function<JsonObject, U> grpcFunction, String folderName) {
+    Future<Void> sendData(ManagedChannel channel, Consumer<Handler<GrpcUniExchange<U, StoreReply>>> storeFunction, Function<JsonObject, Model<U>> grpcFunction, String folderName) {
         Future<Void> resultFuture = Future.future();
         final Collection<Integer> ttsaveNumbers = IntStream.rangeClosed(1, 2)
                 .boxed()
@@ -129,7 +130,7 @@ public class GrpcSenderRegular implements GrpcSender {
     }
 
     protected <U extends MessageLite>
-    void sendModels(Consumer<Handler<GrpcUniExchange<U, StoreReply>>> storeFunction, Function<JsonObject, U> grpcFunction, String folderName, int ttsaveNo, Handler<AsyncResult<Void>> resultHandler) {
+    void sendModels(Consumer<Handler<GrpcUniExchange<U, StoreReply>>> storeFunction, Function<JsonObject, Model<U>> grpcFunction, String folderName, int ttsaveNo, Handler<AsyncResult<Void>> resultHandler) {
         storeFunction.accept(exchange -> { exchange
                 .handler(ar -> {
                     if (ar.succeeded()) {
@@ -146,7 +147,7 @@ public class GrpcSenderRegular implements GrpcSender {
                 });
 
             DataHelper.readTTSaveFile(folderName, ttsaveNo).forEach(json -> {
-                U grpcModel = grpcFunction.apply(json);
+                U grpcModel = grpcFunction.apply(json).toGrpc();
                 exchange.write(grpcModel);
             });
             exchange.end();
@@ -155,7 +156,7 @@ public class GrpcSenderRegular implements GrpcSender {
 
     private ManagedChannel createGrpcChannel() {
         return VertxChannelBuilder
-                .forAddress(vertx, "localhost", TestConfig.API_PORT + 1)
+                .forAddress(vertx, "localhost", TestConfig.API_PORT)
                 .useSsl(this::setGrpcSslOptions)
                 .build();
     }

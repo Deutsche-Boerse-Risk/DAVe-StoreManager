@@ -1,9 +1,8 @@
 package com.deutscheboerse.risk.dave.healthcheck;
 
 import com.deutscheboerse.risk.dave.HealthCheckVerticle;
-import com.deutscheboerse.risk.dave.utils.TestConfig;
-import com.deutscheboerse.risk.dave.ApiVerticle;
 import com.deutscheboerse.risk.dave.MainVerticle;
+import com.deutscheboerse.risk.dave.utils.TestConfig;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -64,7 +63,7 @@ public class HealthCheckIT {
                 .put("id", "readiness")
                 .put("status", "UP")))
                 .put("outcome", "UP");
-        vertx.createHttpClient().getNow(TestConfig.HEALTHCHECK_PORT, "localhost", ApiVerticle.REST_READINESS,
+        vertx.createHttpClient().getNow(TestConfig.HEALTHCHECK_PORT, "localhost", HealthCheckVerticle.REST_READINESS,
                 assertEqualsHttpHandler(200, expected.encode(), context));
     }
 
