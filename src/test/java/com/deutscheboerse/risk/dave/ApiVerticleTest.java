@@ -285,7 +285,7 @@ public class ApiVerticleTest {
     private void deployApiVerticle(TestContext context, JsonObject options) {
         DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(TestConfig.getApiConfig().mergeIn(options));
         Async asyncGrpcDeploy = context.async();
-        vertx.deployVerticle(GrpcVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(
+        vertx.deployVerticle(ApiVerticle.class.getName(), deploymentOptions, context.asyncAssertSuccess(
                 ar -> asyncGrpcDeploy.complete()
         ));
         asyncGrpcDeploy.awaitSuccess();

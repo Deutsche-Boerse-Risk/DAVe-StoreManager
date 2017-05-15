@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 
 import static com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component.API;
 
-public class GrpcVerticle extends AbstractVerticle {
-    private static final Logger LOG = LoggerFactory.getLogger(GrpcVerticle.class);
+public class ApiVerticle extends AbstractVerticle {
+    private static final Logger LOG = LoggerFactory.getLogger(ApiVerticle.class);
 
     private static final String HIDDEN_CERTIFICATE = "******************";
 
@@ -41,7 +41,7 @@ public class GrpcVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        LOG.info("Starting {} with configuration: {}", GrpcVerticle.class.getSimpleName(), hideCertificates(config()).encodePrettily());
+        LOG.info("Starting {} with configuration: {}", ApiVerticle.class.getSimpleName(), hideCertificates(config()).encodePrettily());
 
         config = (new ObjectMapper()).readValue(config().toString(), ApiConfig.class);
 
@@ -97,9 +97,6 @@ public class GrpcVerticle extends AbstractVerticle {
                 .forEach(trustKey -> pemTrustOptions.addCertValue(Buffer.buffer(trustKey)));
         if (!pemTrustOptions.getCertValues().isEmpty()) {
             sslOptions.setPemTrustOptions(pemTrustOptions);
-//            ClientAuth clientAuth = config.isSslRequireClientAuth() ?
-//                    ClientAuth.REQUIRED : ClientAuth.REQUEST;
-//            sslOptions.setClientAuth(clientAuth);
         }
     }
 

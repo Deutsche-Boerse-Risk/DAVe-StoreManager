@@ -30,7 +30,7 @@ public class MainVerticle extends AbstractVerticle {
         Future<Void> chainFuture = Future.future();
         this.retrieveConfig()
                 .compose(i -> deployPersistenceVerticle())
-                .compose(i -> deployGrpcVerticle())
+                .compose(i -> deployApiVerticle())
                 .compose(i -> deployHealthCheckVerticle())
                 .compose(chainFuture::complete, chainFuture);
 
@@ -85,8 +85,8 @@ public class MainVerticle extends AbstractVerticle {
                 new JsonObject()).put("guice_binder", this.configuration.getString("guice_binder", PersistenceVerticleBinder.class.getName())), 1);
     }
 
-    private Future<Void> deployGrpcVerticle() {
-        return this.deployVerticle(GrpcVerticle.class, this.configuration.getJsonObject(API_CONF_KEY, new JsonObject()), API_VERTICLE_INSTANCES);
+    private Future<Void> deployApiVerticle() {
+        return this.deployVerticle(ApiVerticle.class, this.configuration.getJsonObject(API_CONF_KEY, new JsonObject()), API_VERTICLE_INSTANCES);
     }
 
     private Future<Void> deployHealthCheckVerticle() {
