@@ -120,6 +120,7 @@ public class QueryApi {
         query.stream()
             .filter(entry -> (!(entry.getValue() instanceof String) || !"*".equals(entry.getValue())))
             .filter(entry -> (!(entry.getValue() instanceof Integer) || !Integer.valueOf(-1).equals(entry.getValue())))
+            .filter(entry -> (!(entry.getValue() instanceof Double) || !Double.valueOf(-1.0d).equals(entry.getValue())))
             .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
         return result;
     }
