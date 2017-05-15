@@ -39,7 +39,7 @@ public class QueryApi {
         query.put("marginCurrency", request.getMarginCurrency());
         query.put("clearingCurrency", request.getClearingCurrency());
         query.put("pool", request.getPool());
-        
+
         query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryAccountMargin);
     }
 

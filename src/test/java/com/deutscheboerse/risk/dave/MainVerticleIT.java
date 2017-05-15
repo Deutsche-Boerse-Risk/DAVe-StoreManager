@@ -71,12 +71,12 @@ public class MainVerticleIT {
         MongoClient mongoClient = this.createMongoClient(options.getConfig().getJsonObject("mongo"));
         final GrpcSender grpcSender = new GrpcSenderRegular(this.vertx);
         grpcSender.sendAllData(context.asyncAssertSuccess());
-        this.testCountInCollection(context, mongoClient, AccountMarginModel.getMongoModelDescriptor().getCollectionName(), ACCOUNT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_SPLIT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, PoolMarginModel.getMongoModelDescriptor().getCollectionName(), POOL_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, PositionReportModel.getMongoModelDescriptor().getCollectionName(), POSITION_REPORT_COUNT);
-        this.testCountInCollection(context, mongoClient, RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName(), RISK_LIMIT_UTILIZATION_COUNT);
+        this.testCountSnapshotsInCollection(context, mongoClient, AccountMarginModel.getMongoModelDescriptor().getCollectionName(), ACCOUNT_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_SPLIT_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, PoolMarginModel.getMongoModelDescriptor().getCollectionName(), POOL_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, PositionReportModel.getMongoModelDescriptor().getCollectionName(), POSITION_REPORT_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName(), RISK_LIMIT_UTILIZATION_COUNT, 2);
     }
 
 //    private void testQueryCommands(TestContext context) {
@@ -116,15 +116,16 @@ public class MainVerticleIT {
         this.vertx.deployVerticle(MainVerticle.class.getName(), options, context.asyncAssertFailure());
     }
 
-    private void testCountInCollection(TestContext  context, MongoClient mongoClient, String collection, long count) {
+    private void testCountSnapshotsInCollection(TestContext  context, MongoClient mongoClient, String collection, long expectedCount, int snapshotSize) {
+        JsonObject query = new JsonObject().put("snapshots", new JsonObject().put("$size", snapshotSize));
         AtomicLong currentCount = new AtomicLong();
         int tries = 0;
-        while (currentCount.get() != count && tries < 60) {
+        while (currentCount.get() != expectedCount && tries < 60) {
             Async asyncHistoryCount = context.async();
-            mongoClient.count(collection, new JsonObject(), ar -> {
+            mongoClient.find(collection, query, ar -> {
                 if (ar.succeeded()) {
-                    currentCount.set(ar.result());
-                    if (currentCount.get() == count && !asyncHistoryCount.isCompleted()) {
+                    currentCount.set(ar.result().size());
+                    if (currentCount.get() == expectedCount && !asyncHistoryCount.isCompleted()) {
                         asyncHistoryCount.complete();
                     }
                 } else {
@@ -138,7 +139,7 @@ public class MainVerticleIT {
             }
             tries++;
         }
-        context.assertEquals(count, currentCount.get());
+        context.assertEquals(expectedCount, currentCount.get());
     }
 
     @After
