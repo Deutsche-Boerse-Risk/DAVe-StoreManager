@@ -76,14 +76,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreAccountMarginError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendAccountMarginData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendAccountMarginData);
     }
 
     @Test
     public void testQueryAccountMargin(TestContext context) {
         AccountMarginModel model = DataHelper.getLastModelFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1, AccountMarginModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryAccountMargin);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryAccountMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryAccountMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryAccountMargin);
     }
 
     // LiquiGroup Margin
@@ -96,14 +96,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreLiquiGroupMarginError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendLiquiGroupMarginData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendLiquiGroupMarginData);
     }
 
     @Test
     public void testQueryLiquiGroupMargin(TestContext context) {
         LiquiGroupMarginModel model = DataHelper.getLastModelFromFile(DataHelper.LIQUI_GROUP_MARGIN_FOLDER, 1, LiquiGroupMarginModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupMargin);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupMargin);
     }
 
     // LiquiGroupSplit Margin
@@ -116,14 +116,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreLiquiGroupSplitMarginError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendLiquiGroupSplitMarginData);
     }
 
     @Test
     public void testQueryLiquiGroupSplitMargin(TestContext context) {
         LiquiGroupSplitMarginModel model = DataHelper.getLastModelFromFile(DataHelper.LIQUI_GROUP_SPLIT_MARGIN_FOLDER, 1, LiquiGroupSplitMarginModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupSplitMargin);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupSplitMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupSplitMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryLiquiGroupSplitMargin);
     }
 
     // Pool Margin
@@ -136,14 +136,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStorePoolMarginError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendPoolMarginData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendPoolMarginData);
     }
 
     @Test
     public void testQueryPoolMargin(TestContext context) {
         PoolMarginModel model = DataHelper.getLastModelFromFile(DataHelper.POOL_MARGIN_FOLDER, 1, PoolMarginModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPoolMargin);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPoolMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPoolMargin);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPoolMargin);
     }
 
     // Position Report
@@ -156,14 +156,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStorePositionReportError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendPositionReportData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendPositionReportData);
     }
 
     @Test
     public void testQueryPositionReport(TestContext context) {
         PositionReportModel model = DataHelper.getLastModelFromFile(DataHelper.POSITION_REPORT_FOLDER, 1, PositionReportModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPositionReport);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPositionReport);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPositionReport);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryPositionReport);
     }
 
     // Risk Limit Utilization
@@ -176,14 +176,14 @@ public class ApiVerticleTest {
 
     @Test
     public void testStoreRiskLimitUtilizationError(TestContext context) throws InterruptedException {
-        this.testStoreError(context, 2, "Failed to store the document", new GrpcSenderRegularIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
+        this.testStoreError(context, 2, new GrpcSenderRegularIgnoreError(this.vertx)::sendRiskLimitUtilizationData);
     }
 
     @Test
     public void testQueryRiskLimitUtilization(TestContext context) {
         RiskLimitUtilizationModel model = DataHelper.getLastModelFromFile(DataHelper.RISK_LIMIT_UTILIZATION_FOLDER, 1, RiskLimitUtilizationModel::buildFromJson);
-        this.testQuery(context, RequestType.LATEST, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryRiskLimitUtilization);
-        this.testQuery(context, RequestType.HISTORY, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryRiskLimitUtilization);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.LATEST, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryRiskLimitUtilization);
+        this.testQuery(context, DataHelper.getGrpcQueryFromModel(RequestType.HISTORY, model), PersistenceServiceGrpc.newVertxStub(this.grpcChannel)::queryRiskLimitUtilization);
     }
 
     @Test
@@ -209,25 +209,6 @@ public class ApiVerticleTest {
 //
 //        asyncWithCert.awaitSuccess(30000);
 //        ProxyHelper.unregisterService(serviceMessageConsumer);
-    }
-
-
-    @Test
-    public void testQueryBadDataType(TestContext context) {
-//        JsonObject queryParams = new JsonObject()
-//                .put("clearer", "CLEARER")
-//                .put("member", "MEMBER")
-//                .put("contractYear", 1234.5d);
-//
-//        this.deployApiVerticle(context);
-//
-//        final Async async = context.async();
-//        this.createSslClient().getNow(TestConfig.API_PORT, "localhost", new URIBuilder(QUERY_POSITION_REPORT_API + "/latest").addParams(queryParams).build(), res -> {
-//            context.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), res.statusCode());
-//            async.complete();
-//        });
-//
-//        async.awaitSuccess(30000);
     }
 
     @Test
@@ -260,7 +241,8 @@ public class ApiVerticleTest {
         ProxyHelper.unregisterService(serviceMessageConsumer);
     }
 
-    private void testStoreError(TestContext context, int msgCount, String errorMessage, Consumer<Handler<AsyncResult<Void>>> sender) throws InterruptedException {
+    private void testStoreError(TestContext context, int msgCount, Consumer<Handler<AsyncResult<Void>>> sender) throws InterruptedException {
+        String errorMessage = "Failed to store the document";
         ErrorPersistenceService persistenceService = new ErrorPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
 
@@ -280,7 +262,7 @@ public class ApiVerticleTest {
     }
 
     private <Q extends MessageLite, T extends MessageLite>
-    void testQuery(TestContext context, RequestType requestType, Q query,
+    void testQuery(TestContext context, Q query,
                    BiConsumer<Q, Handler<GrpcReadStream<T>>> queryFunction) {
         EchoPersistenceService persistenceService = new EchoPersistenceService();
         MessageConsumer<JsonObject> serviceMessageConsumer = ProxyHelper.registerService(PersistenceService.class, this.vertx, persistenceService, PersistenceService.SERVICE_ADDRESS);
@@ -288,10 +270,9 @@ public class ApiVerticleTest {
         this.deployApiVerticle(context);
         final Async async = context.async();
 
-        queryFunction.accept(query, request -> {
-            request.handler(payload -> context.fail("Echo service should not return anything"))
-                    .endHandler(v -> async.complete());
-        });
+        queryFunction.accept(query, request -> request
+                .handler(payload -> context.fail("Echo service should not return anything"))
+                .endHandler(v -> async.complete()));
 
         async.awaitSuccess(30000);
         ProxyHelper.unregisterService(serviceMessageConsumer);

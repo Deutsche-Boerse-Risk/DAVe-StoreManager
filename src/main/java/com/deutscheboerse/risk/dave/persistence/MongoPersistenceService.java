@@ -3,6 +3,7 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
+import com.mongodb.MongoWriteException;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -24,6 +25,9 @@ public class MongoPersistenceService implements PersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(MongoPersistenceService.class);
 
     private static final int RECONNECT_DELAY = 2000;
+    private static final int MONGO_DUPLICATE_KEY_ERROR_CODE = 11000;
+    private static final int RETRIES_IF_UPSERT_FAILED = 3;
+
     static final String ACCOUNT_MARGIN_COLLECTION = AccountMarginModel.getMongoModelDescriptor().getCollectionName();
     static final String LIQUI_GROUP_MARGIN_COLLECTION = LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName();
     static final String LIQUI_GROUP_SPLIT_MARGIN_COLLECTION = LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName();
@@ -202,9 +206,16 @@ public class MongoPersistenceService implements PersistenceService {
     }
 
     private void store(Collection<? extends Model> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
+        this.store(models, collection, RETRIES_IF_UPSERT_FAILED, resultHandler);
+    }
+
+    private void store(Collection<? extends Model> models, String collection, int remainingRetries, Handler<AsyncResult<Void>> resultHandler) {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
+            } else if (ar.cause() instanceof MongoWriteException && ((MongoWriteException) ar.cause()).getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE && remainingRetries > 1) {
+                LOG.warn("Upsert failed - known Mongo issue, retrying ... ", ar.cause());
+                store(models, collection, remainingRetries - 1, resultHandler);
             } else {
                 connectionManager.startReconnection();
                 resultHandler.handle(ServiceException.fail(STORE_ERROR, ar.cause().getMessage()));
