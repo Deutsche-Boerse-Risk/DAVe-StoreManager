@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.restapi;
 
-import com.deutscheboerse.risk.dave.*;
+import com.deutscheboerse.risk.dave.grpc.*;
 import com.deutscheboerse.risk.dave.model.Model;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import com.deutscheboerse.risk.dave.persistence.RequestType;

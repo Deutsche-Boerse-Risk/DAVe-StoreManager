@@ -1,6 +1,7 @@
 package com.deutscheboerse.risk.dave;
 
 import com.deutscheboerse.risk.dave.config.ApiConfig;
+import com.deutscheboerse.risk.dave.grpc.*;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.restapi.QueryApi;
 import com.deutscheboerse.risk.dave.restapi.StoreApi;

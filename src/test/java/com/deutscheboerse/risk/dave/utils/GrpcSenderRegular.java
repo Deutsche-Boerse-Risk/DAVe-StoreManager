@@ -1,7 +1,7 @@
 package com.deutscheboerse.risk.dave.utils;
 
-import com.deutscheboerse.risk.dave.PersistenceServiceGrpc;
-import com.deutscheboerse.risk.dave.StoreReply;
+import com.deutscheboerse.risk.dave.grpc.PersistenceServiceGrpc;
+import com.deutscheboerse.risk.dave.grpc.StoreReply;
 import com.deutscheboerse.risk.dave.model.*;
 import com.google.protobuf.MessageLite;
 import io.grpc.ManagedChannel;

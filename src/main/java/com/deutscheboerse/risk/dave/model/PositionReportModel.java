@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
-import com.deutscheboerse.risk.dave.PositionReport;
+import com.deutscheboerse.risk.dave.grpc.PositionReport;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;

@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
-import com.deutscheboerse.risk.dave.LiquiGroupMargin;
+import com.deutscheboerse.risk.dave.grpc.LiquiGroupMargin;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;

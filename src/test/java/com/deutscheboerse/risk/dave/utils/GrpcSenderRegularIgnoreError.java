@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.utils;
 
-import com.deutscheboerse.risk.dave.StoreReply;
+import com.deutscheboerse.risk.dave.grpc.StoreReply;
 import com.deutscheboerse.risk.dave.model.Model;
 import com.google.protobuf.MessageLite;
 import io.vertx.core.AsyncResult;
