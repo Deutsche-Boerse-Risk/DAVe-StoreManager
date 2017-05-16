@@ -6,19 +6,19 @@ option java_outer_classname = "PersistenceServiceProto";
 package dave;
 
 service PersistenceService {
-    rpc storeAccountMargin         (stream AccountMargin)         returns (StoreReply) {}
-    rpc storeLiquiGroupMargin      (stream LiquiGroupMargin)      returns (StoreReply) {}
-    rpc storeLiquiGroupSplitMargin (stream LiquiGroupSplitMargin) returns (StoreReply) {}
-    rpc storePoolMargin            (stream PoolMargin)            returns (StoreReply) {}
-    rpc storePositionReport        (stream PositionReport)        returns (StoreReply) {}
-    rpc storeRiskLimitUtilization  (stream RiskLimitUtilization)  returns (StoreReply) {}
+    rpc storeAccountMargin         (stream AccountMargin)         returns (StoreReply);
+    rpc storeLiquiGroupMargin      (stream LiquiGroupMargin)      returns (StoreReply);
+    rpc storeLiquiGroupSplitMargin (stream LiquiGroupSplitMargin) returns (StoreReply);
+    rpc storePoolMargin            (stream PoolMargin)            returns (StoreReply);
+    rpc storePositionReport        (stream PositionReport)        returns (StoreReply);
+    rpc storeRiskLimitUtilization  (stream RiskLimitUtilization)  returns (StoreReply);
 
-    rpc queryAccountMargin         (AccountMarginQuery)           returns (stream AccountMargin) {}
-    rpc queryLiquiGroupMargin      (LiquiGroupMarginQuery)        returns (stream LiquiGroupMargin) {}
-    rpc queryLiquiGroupSplitMargin (LiquiGroupSplitMarginQuery)   returns (stream LiquiGroupSplitMargin) {}
-    rpc queryPoolMargin            (PoolMarginQuery)              returns (stream PoolMargin) {}
-    rpc queryPositionReport        (PositionReportQuery)          returns (stream PositionReport) {}
-    rpc queryRiskLimitUtilization  (RiskLimitUtilizationQuery)    returns (stream RiskLimitUtilization) {}
+    rpc queryAccountMargin         (AccountMarginQuery)           returns (stream AccountMargin);
+    rpc queryLiquiGroupMargin      (LiquiGroupMarginQuery)        returns (stream LiquiGroupMargin);
+    rpc queryLiquiGroupSplitMargin (LiquiGroupSplitMarginQuery)   returns (stream LiquiGroupSplitMargin);
+    rpc queryPoolMargin            (PoolMarginQuery)              returns (stream PoolMargin);
+    rpc queryPositionReport        (PositionReportQuery)          returns (stream PositionReport);
+    rpc queryRiskLimitUtilization  (RiskLimitUtilizationQuery)    returns (stream RiskLimitUtilization);
 }
 
 message AccountMargin {
@@ -209,6 +209,4 @@ message RiskLimitUtilizationQuery {
     string limit_type                    =  5;
 }
 
-message StoreReply {
-    bool   succeeded                     =  1;
-}
+message StoreReply {}

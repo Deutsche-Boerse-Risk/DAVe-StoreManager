@@ -72,7 +72,7 @@ public class StoreApi {
         return ar -> {
             if (ar.succeeded()) {
                 LOG.trace("Received response for store request");
-                response.complete(StoreReply.newBuilder().setSucceeded(true).build());
+                response.complete(StoreReply.newBuilder().build());
             } else {
                 LOG.error("Failed to store the document", ar.cause());
                 response.fail(ar.cause());

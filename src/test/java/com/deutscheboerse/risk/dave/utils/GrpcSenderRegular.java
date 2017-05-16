@@ -134,12 +134,7 @@ public class GrpcSenderRegular implements GrpcSender {
         storeFunction.accept(exchange -> { exchange
                 .handler(ar -> {
                     if (ar.succeeded()) {
-                        StoreReply reply = ar.result();
-                        if (reply.getSucceeded()) {
-                            resultHandler.handle(Future.succeededFuture());
-                        } else {
-                            resultHandler.handle(Future.failedFuture("Unable to send all models"));
-                        }
+                        resultHandler.handle(Future.succeededFuture());
                     } else {
                         LOG.error("Service unavailable", ar);
                         resultHandler.handle(Future.failedFuture(ar.cause()));
