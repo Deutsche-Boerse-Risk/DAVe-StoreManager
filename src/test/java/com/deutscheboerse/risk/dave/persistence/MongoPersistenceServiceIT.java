@@ -1,32 +1,32 @@
- package com.deutscheboerse.risk.dave.persistence;
+package com.deutscheboerse.risk.dave.persistence;
 
- import ch.qos.logback.classic.Level;
- import ch.qos.logback.classic.Logger;
- import ch.qos.logback.classic.spi.ILoggingEvent;
- import ch.qos.logback.core.Appender;
- import com.deutscheboerse.risk.dave.log.TestAppender;
- import com.deutscheboerse.risk.dave.model.*;
- import com.deutscheboerse.risk.dave.utils.DataHelper;
- import com.deutscheboerse.risk.dave.utils.TestConfig;
- import io.vertx.core.AsyncResult;
- import io.vertx.core.Handler;
- import io.vertx.core.Vertx;
- import io.vertx.core.json.JsonArray;
- import io.vertx.core.json.JsonObject;
- import io.vertx.ext.mongo.MongoClient;
- import io.vertx.ext.unit.Async;
- import io.vertx.ext.unit.TestContext;
- import io.vertx.ext.unit.junit.VertxUnitRunner;
- import io.vertx.serviceproxy.ProxyHelper;
- import org.junit.*;
- import org.junit.runner.RunWith;
- import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import com.deutscheboerse.risk.dave.log.TestAppender;
+import com.deutscheboerse.risk.dave.model.*;
+import com.deutscheboerse.risk.dave.utils.DataHelper;
+import com.deutscheboerse.risk.dave.utils.TestConfig;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.serviceproxy.ProxyHelper;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 
- import java.io.IOException;
- import java.util.*;
- import java.util.function.Function;
- import java.util.stream.Collectors;
- import java.util.stream.IntStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RunWith(VertxUnitRunner.class)
 public class MongoPersistenceServiceIT {
