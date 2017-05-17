@@ -1,142 +1,148 @@
 package com.deutscheboerse.risk.dave.restapi;
 
-import com.deutscheboerse.risk.dave.ApiVerticle;
-import com.deutscheboerse.risk.dave.model.*;
+import com.deutscheboerse.risk.dave.grpc.*;
+import com.deutscheboerse.risk.dave.model.Model;
 import com.deutscheboerse.risk.dave.persistence.PersistenceService;
 import com.deutscheboerse.risk.dave.persistence.RequestType;
-import com.google.common.base.Preconditions;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import com.google.protobuf.MessageLite;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.grpc.GrpcWriteStream;
 import io.vertx.serviceproxy.ProxyHelper;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class QueryApi {
     private static final Logger LOG = LoggerFactory.getLogger(QueryApi.class);
+    private static final int DEFAULT_PROXY_SEND_TIMEOUT = 60000;
 
     protected final Vertx vertx;
     private final PersistenceService persistenceProxy;
 
     public QueryApi(Vertx vertx) {
         this.vertx = vertx;
-        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS);
+        DeliveryOptions deliveryOptions = new DeliveryOptions().setSendTimeout(DEFAULT_PROXY_SEND_TIMEOUT);
+        this.persistenceProxy = ProxyHelper.createProxy(PersistenceService.class, vertx, PersistenceService.SERVICE_ADDRESS, deliveryOptions);
     }
 
-    public void queryLatestHandler(RoutingContext routingContext) {
-        this.doQuery(routingContext, RequestType.LATEST);
+    public void queryAccountMargin(AccountMarginQuery request, GrpcWriteStream<AccountMargin> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("member", request.getMember());
+        query.put("account", request.getAccount());
+        query.put("marginCurrency", request.getMarginCurrency());
+        query.put("clearingCurrency", request.getClearingCurrency());
+        query.put("pool", request.getPool());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryAccountMargin);
     }
 
-    public void queryHistoryHandler(RoutingContext routingContext) {
-        this.doQuery(routingContext, RequestType.HISTORY);
+    public void queryLiquiGroupMargin(LiquiGroupMarginQuery request, GrpcWriteStream<LiquiGroupMargin> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("member", request.getMember());
+        query.put("account", request.getAccount());
+        query.put("marginClass", request.getMarginClass());
+        query.put("marginCurrency", request.getMarginCurrency());
+        query.put("marginGroup", request.getMarginGroup());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryLiquiGroupMargin);
     }
 
-    private void doQuery(RoutingContext routingContext, RequestType requestType) {
-        try {
-            this.queryHandler(routingContext, requestType);
-        } catch (IllegalArgumentException e) {
-            LOG.error("Bad request: {}", e.getMessage(), e);
-            routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
-        }
+    public void queryLiquiGroupSplitMargin(LiquiGroupSplitMarginQuery request, GrpcWriteStream<LiquiGroupSplitMargin> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("member", request.getMember());
+        query.put("account", request.getAccount());
+        query.put("liquidationGroup", request.getLiquidationGroup());
+        query.put("liquidationGroupSplit", request.getLiquidationGroupSplit());
+        query.put("marginCurrency", request.getMarginCurrency());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryLiquiGroupSplitMargin);
     }
 
-    private void queryHandler(RoutingContext routingContext, RequestType requestType) {
-        switch(routingContext.request().getParam("model")) {
-            case ApiVerticle.ACCOUNT_MARGIN_REQUEST_PARAMETER:
-                AccountMarginModel accountMarginModel = new AccountMarginModel();
-                this.persistenceProxy.queryAccountMargin(requestType, this.createParamsFromContext(routingContext, accountMarginModel), getResponseHandler(routingContext));
-                break;
-            case ApiVerticle.LIQUI_GROUP_MARGIN_REQUEST_PARAMETER:
-                LiquiGroupMarginModel liquiGroupMarginModel = new LiquiGroupMarginModel();
-                this.persistenceProxy.queryLiquiGroupMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupMarginModel), getResponseHandler(routingContext));
-                break;
-            case ApiVerticle.LIQUI_GROUP_SPLIT_MARGIN_REQUEST_PARAMETER:
-                LiquiGroupSplitMarginModel liquiGroupSplitMarginModel = new LiquiGroupSplitMarginModel();
-                this.persistenceProxy.queryLiquiGroupSplitMargin(requestType, this.createParamsFromContext(routingContext, liquiGroupSplitMarginModel), getResponseHandler(routingContext));
-                break;
-            case ApiVerticle.POOL_MARGIN_REQUEST_PARAMETER:
-                PoolMarginModel poolMarginModel = new PoolMarginModel();
-                this.persistenceProxy.queryPoolMargin(requestType, this.createParamsFromContext(routingContext, poolMarginModel), getResponseHandler(routingContext));
-                break;
-            case ApiVerticle.POSITION_REPORT_REQUEST_PARAMETER:
-                PositionReportModel positionReportModel = new PositionReportModel();
-                this.persistenceProxy.queryPositionReport(requestType, this.createParamsFromContext(routingContext, positionReportModel), getResponseHandler(routingContext));
-                break;
-            case ApiVerticle.RISK_LIMIT_UTILIZATION_REQUEST_PARAMETER:
-                RiskLimitUtilizationModel riskLimitUtilizationModel = new RiskLimitUtilizationModel();
-                this.persistenceProxy.queryRiskLimitUtilization(requestType, this.createParamsFromContext(routingContext, riskLimitUtilizationModel), getResponseHandler(routingContext));
-                break;
-            default:
-                LOG.error("Unrecognized model type");
-                routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code()).end();
-                break;
-        }
+    public void queryPoolMargin(PoolMarginQuery request, GrpcWriteStream<PoolMargin> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("pool", request.getPool());
+        query.put("marginCurrency", request.getMarginCurrency());
+        query.put("clrRptCurrency", request.getClrRptCurrency());
+        query.put("poolOwner", request.getPoolOwner());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryPoolMargin);
     }
 
-    private JsonObject createParamsFromContext(RoutingContext routingContext, AbstractModel model) {
-        final JsonObject result = new JsonObject();
-        routingContext.request().params().entries()
-                .stream()
-                .filter(entry -> !"model".equals(entry.getKey()))
-                .forEach(entry -> {
-                    final String parameterName = entry.getKey();
-                    final String parameterValue = entry.getValue();
-                    try {
-                        String decodedValue = URLDecoder.decode(parameterValue, StandardCharsets.UTF_8.toString());
-                        Class<?> parameterType = getParameterType(parameterName, model);
-                        result.put(parameterName, convertValue(decodedValue, parameterType));
-                    } catch (UnsupportedEncodingException e) {
-                        throw new AssertionError(e);
-                    } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException(String.format("Cannot convert '%s' (%s) to %s",
-                                parameterName, parameterValue, getParameterType(parameterName, model).getSimpleName()));
-                    }
-                });
+    public void queryPositionReport(PositionReportQuery request, GrpcWriteStream<PositionReport> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("member", request.getMember());
+        query.put("account", request.getAccount());
+        query.put("liquidationGroup", request.getLiquidationGroup());
+        query.put("liquidationGroupSplit", request.getLiquidationGroupSplit());
+        query.put("product", request.getProduct());
+        query.put("callPut", request.getCallPut());
+        query.put("contractYear", request.getContractYear());
+        query.put("contractMonth", request.getContractMonth());
+        query.put("expiryDay", request.getExpiryDay());
+        query.put("exercisePrice", request.getExercisePrice());
+        query.put("version", request.getVersion());
+        query.put("flexContractSymbol", request.getFlexContractSymbol());
+        query.put("clearingCurrency", request.getClearingCurrency());
+        query.put("productCurrency", request.getProductCurrency());
+        query.put("underlying", request.getUnderlying());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryPositionReport);
+    }
+
+    public void queryRiskLimitUtilization(RiskLimitUtilizationQuery request, GrpcWriteStream<RiskLimitUtilization> response) {
+        RequestType requestType = request.getLatest() ? RequestType.LATEST : RequestType.HISTORY;
+        JsonObject query = new JsonObject();
+        query.put("clearer", request.getClearer());
+        query.put("member", request.getMember());
+        query.put("maintainer", request.getMaintainer());
+        query.put("limitType", request.getLimitType());
+
+        query(requestType, this.getFilteredQueryParams(query), response, this.persistenceProxy::queryRiskLimitUtilization);
+    }
+
+    private JsonObject getFilteredQueryParams(JsonObject query) {
+        JsonObject result = new JsonObject();
+        query.stream()
+            .filter(entry -> (!(entry.getValue() instanceof String) || !"*".equals(entry.getValue())))
+            .filter(entry -> (!(entry.getValue() instanceof Integer) || !Integer.valueOf(-1).equals(entry.getValue())))
+            .filter(entry -> (!(entry.getValue() instanceof Double) || !Double.valueOf(-1.0d).equals(entry.getValue())))
+            .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
         return result;
     }
 
-    private Class<?> getParameterType(String parameterName, AbstractModel model) {
-        Map<String, Class> parameterDescriptor = new HashMap<>(model.getKeysDescriptor());
-        parameterDescriptor.putAll(model.getUniqueFieldsDescriptor());
-
-        Preconditions.checkArgument(parameterDescriptor.containsKey(parameterName),
-                "Unknown parameter '%s'", parameterName);
-        return parameterDescriptor.get(parameterName);
+    private interface QueryFunction<T extends MessageLite, U extends Model<T>> {
+        void query(RequestType requestType, JsonObject query, Handler<AsyncResult<List<U>>> resultHandler);
     }
 
-    private <T> T convertValue(String value, Class<T> clazz) {
-        if (clazz.equals(String.class)) {
-            return clazz.cast(value);
-        } else if (clazz.equals(Integer.class)) {
-            return clazz.cast(Integer.parseInt(value));
-        } else if (clazz.equals(Double.class)) {
-            return clazz.cast(Double.parseDouble(value));
-        } else {
-            throw new AssertionError("Unsupported type " + clazz);
-        }
-    }
-
-    private Handler<AsyncResult<String>> getResponseHandler(RoutingContext routingContext) {
-        return ar -> {
+    private <T extends MessageLite, U extends Model<T>>
+    void query(RequestType requestType,
+               JsonObject query,
+               GrpcWriteStream<T> response,
+               QueryFunction<T, U> queryFunction) {
+        queryFunction.query(requestType, query, ar -> {
             if (ar.succeeded()) {
                 LOG.trace("Received response for query request");
-                routingContext.response()
-                        .setStatusCode(HttpResponseStatus.OK.code())
-                        .putHeader("content-type", "application/json; charset=utf-8")
-                        .end(ar.result());
+                ar.result().forEach(model -> response.write(model.toGrpc()));
+                response.end();
             } else {
                 LOG.error("Failed to query the DB service", ar.cause());
-                routingContext.response().setStatusCode(HttpResponseStatus.SERVICE_UNAVAILABLE.code()).end();
+                response.fail(ar.cause());
             }
-        };
+        });
     }
 }

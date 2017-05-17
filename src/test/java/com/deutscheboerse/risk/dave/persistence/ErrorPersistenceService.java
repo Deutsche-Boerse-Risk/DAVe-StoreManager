@@ -47,32 +47,32 @@ public class ErrorPersistenceService implements PersistenceService {
     }
 
     @Override
-    public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<AccountMarginModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 
     @Override
-    public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupMarginModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 
     @Override
-    public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupSplitMarginModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 
     @Override
-    public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<PoolMarginModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 
     @Override
-    public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<List<PositionReportModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 
     @Override
-    public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler) {
+    public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<List<RiskLimitUtilizationModel>>> resultHandler) {
         resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unable to query message"));
     }
 

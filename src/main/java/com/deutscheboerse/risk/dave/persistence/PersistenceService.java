@@ -1,5 +1,6 @@
 package com.deutscheboerse.risk.dave.persistence;
 
+import com.deutscheboerse.risk.dave.*;
 import com.deutscheboerse.risk.dave.model.*;
 import io.vertx.codegen.annotations.ProxyClose;
 import io.vertx.codegen.annotations.ProxyGen;
@@ -26,12 +27,12 @@ public interface PersistenceService {
     void storePositionReport(List<PositionReportModel> models, Handler<AsyncResult<Void>> resultHandler);
     void storeRiskLimitUtilization(List<RiskLimitUtilizationModel> models, Handler<AsyncResult<Void>> resultHandler);
 
-    void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
-    void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
-    void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
-    void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
-    void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
-    void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<String>> resultHandler);
+    void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<AccountMarginModel>>> resultHandler);
+    void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupMarginModel>>> resultHandler);
+    void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupSplitMarginModel>>> resultHandler);
+    void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<PoolMarginModel>>> resultHandler);
+    void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<List<PositionReportModel>>> resultHandler);
+    void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<List<RiskLimitUtilizationModel>>> resultHandler);
 
     @ProxyClose
     void close();

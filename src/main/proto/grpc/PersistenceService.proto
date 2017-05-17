@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.deutscheboerse.risk.dave.grpc";
+option java_outer_classname = "PersistenceServiceProto";
+package dave;
+
+service PersistenceService {
+    rpc storeAccountMargin         (stream AccountMargin)         returns (StoreReply);
+    rpc storeLiquiGroupMargin      (stream LiquiGroupMargin)      returns (StoreReply);
+    rpc storeLiquiGroupSplitMargin (stream LiquiGroupSplitMargin) returns (StoreReply);
+    rpc storePoolMargin            (stream PoolMargin)            returns (StoreReply);
+    rpc storePositionReport        (stream PositionReport)        returns (StoreReply);
+    rpc storeRiskLimitUtilization  (stream RiskLimitUtilization)  returns (StoreReply);
+
+    rpc queryAccountMargin         (AccountMarginQuery)           returns (stream AccountMargin);
+    rpc queryLiquiGroupMargin      (LiquiGroupMarginQuery)        returns (stream LiquiGroupMargin);
+    rpc queryLiquiGroupSplitMargin (LiquiGroupSplitMarginQuery)   returns (stream LiquiGroupSplitMargin);
+    rpc queryPoolMargin            (PoolMarginQuery)              returns (stream PoolMargin);
+    rpc queryPositionReport        (PositionReportQuery)          returns (stream PositionReport);
+    rpc queryRiskLimitUtilization  (RiskLimitUtilizationQuery)    returns (stream RiskLimitUtilization);
+}
+
+message AccountMargin {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string member                        =  5;
+    string account                       =  6;
+    string margin_currency               =  7;
+    string clearing_currency             =  8;
+    string pool                          =  9;
+    double margin_req_in_margin_curr     = 10;
+    double margin_req_in_clr_curr        = 11;
+    double unadjusted_margin_requirement = 12;
+    double variation_premium_payment     = 13;
+}
+
+message LiquiGroupMargin {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string member                        =  5;
+    string account                       =  6;
+    string margin_class                  =  7;
+    string margin_currency               =  8;
+    string margin_group                  =  9;
+    double premium_margin                = 10;
+    double current_liquidating_margin    = 11;
+    double futures_spread_margin         = 12;
+    double additional_margin             = 13;
+    double unadjusted_margin_requirement = 14;
+    double variation_premium_payment     = 15;
+}
+
+message LiquiGroupSplitMargin {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string member                        =  5;
+    string account                       =  6;
+    string liquidation_group             =  7;
+    string liquidation_group_split       =  8;
+    string margin_currency               =  9;
+    double premium_margin                = 10;
+    double market_risk                   = 11;
+    double liqu_risk                     = 12;
+    double long_option_credit            = 13;
+    double variation_premium_payment     = 14;
+}
+
+message PoolMargin {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string pool                          =  5;
+    string margin_currency               =  6;
+    string clr_rpt_currency              =  7;
+    double required_margin               =  8;
+    double cash_collateral_amount        =  9;
+    double adjusted_securities           = 10;
+    double adjusted_guarantee            = 11;
+    double over_under_in_margin_curr     = 12;
+    double over_under_in_clr_rpt_curr    = 13;
+    double vari_prem_in_margin_curr      = 14;
+    double adjusted_exchange_rate        = 15;
+    string pool_owner                    = 16;
+}
+
+message PositionReport {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string member                        =  5;
+    string account                       =  6;
+    string liquidation_group             =  7;
+    string liquidation_group_split       =  8;
+    string product                       =  9;
+    string call_put                      = 10;
+    int32  contract_year                 = 11;
+    int32  contract_month                = 12;
+    int32  expiry_day                    = 13;
+    double exercise_price                = 14;
+    string version                       = 15;
+    string flex_contract_symbol          = 16;
+    double net_quantity_ls               = 17;
+    double net_quantity_ea               = 18;
+    string clearing_currency             = 19;
+    double m_var                         = 20;
+    double comp_var                      = 21;
+    double comp_correlation_break        = 22;
+    double comp_compression_error        = 23;
+    double comp_liquidity_add_on         = 24;
+    double comp_long_option_credit       = 25;
+    string product_currency              = 26;
+    double variation_premium_payment     = 27;
+    double premium_margin                = 28;
+    double normalized_delta              = 29;
+    double normalized_gamma              = 30;
+    double normalized_vega               = 31;
+    double normalized_rho                = 32;
+    double normalized_theta              = 33;
+    string underlying                    = 34;
+}
+
+message RiskLimitUtilization {
+    int32  snapshot_id                   =  1;
+    int32  business_date                 =  2;
+    int64  timestamp                     =  3;
+    string clearer                       =  4;
+    string member                        =  5;
+    string maintainer                    =  6;
+    string limit_type                    =  7;
+    double utilization                   =  8;
+    double warning_level                 =  9;
+    double throttle_level                = 10;
+    double reject_level                  = 11;
+}
+
+message AccountMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string margin_currency               =  5;
+    string clearing_currency             =  6;
+    string pool                          =  7;
+}
+
+message LiquiGroupMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string margin_class                  =  5;
+    string margin_currency               =  6;
+    string margin_group                  =  7;
+}
+
+message LiquiGroupSplitMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string liquidation_group             =  5;
+    string liquidation_group_split       =  6;
+    string margin_currency               =  7;
+}
+
+message PoolMarginQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string pool                          =  3;
+    string margin_currency               =  4;
+    string clr_rpt_currency              =  5;
+    string pool_owner                    =  6;
+}
+
+message PositionReportQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string account                       =  4;
+    string liquidation_group             =  5;
+    string liquidation_group_split       =  6;
+    string product                       =  7;
+    string call_put                      =  8;
+    int32  contract_year                 =  9;
+    int32  contract_month                = 10;
+    int32  expiry_day                    = 11;
+    double exercise_price                = 12;
+    string version                       = 13;
+    string flex_contract_symbol          = 14;
+    string clearing_currency             = 15;
+    string product_currency              = 16;
+    string underlying                    = 17;
+}
+
+message RiskLimitUtilizationQuery {
+    bool   latest                        =  1;
+    string clearer                       =  2;
+    string member                        =  3;
+    string maintainer                    =  4;
+    string limit_type                    =  5;
+}
+
+message StoreReply {}

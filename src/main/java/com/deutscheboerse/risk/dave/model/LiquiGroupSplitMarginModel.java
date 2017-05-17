@@ -1,48 +1,117 @@
 package com.deutscheboerse.risk.dave.model;
 
+import com.deutscheboerse.risk.dave.grpc.LiquiGroupSplitMargin;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @DataObject
-public class LiquiGroupSplitMarginModel extends AbstractModel {
+public class LiquiGroupSplitMarginModel implements Model<LiquiGroupSplitMargin> {
 
-    public LiquiGroupSplitMarginModel() {
-        // Empty constructor
+    private final LiquiGroupSplitMargin grpc;
+
+    public LiquiGroupSplitMarginModel(LiquiGroupSplitMargin grpc) {
+        this.grpc = grpc;
     }
 
     public LiquiGroupSplitMarginModel(JsonObject json) {
-        super(json);
+        verifyJson(json);
+        try {
+            this.grpc = LiquiGroupSplitMargin.parseFrom(json.getBinary("grpc"));
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static LiquiGroupSplitMarginModel buildFromJson(JsonObject json) {
+        return new LiquiGroupSplitMarginModel(LiquiGroupSplitMargin.newBuilder()
+                .setSnapshotId(json.getInteger("snapshotID"))
+                .setBusinessDate(json.getInteger("businessDate"))
+                .setTimestamp(json.getLong("timestamp"))
+                .setClearer(json.getString("clearer"))
+                .setMember(json.getString("member"))
+                .setAccount(json.getString("account"))
+                .setLiquidationGroup(json.getString("liquidationGroup"))
+                .setLiquidationGroupSplit(json.getString("liquidationGroupSplit"))
+                .setMarginCurrency(json.getString("marginCurrency"))
+                .setPremiumMargin(json.getDouble("premiumMargin"))
+                .setMarketRisk(json.getDouble("marketRisk"))
+                .setLiquRisk(json.getDouble("liquRisk"))
+                .setLongOptionCredit(json.getDouble("longOptionCredit"))
+                .setVariationPremiumPayment(json.getDouble("variationPremiumPayment"))
+                .build());
     }
 
     @Override
-    public Map<String, Class> getKeysDescriptor() {
-        Map<String, Class<?>> keys = new LinkedHashMap<>();
-        keys.put("clearer", String.class);
-        keys.put("member", String.class);
-        keys.put("account", String.class);
-        keys.put("liquidationGroup", String.class);
-        keys.put("liquidationGroupSplit", String.class);
-        keys.put("marginCurrency", String.class);
-        return Collections.unmodifiableMap(keys);
+    public LiquiGroupSplitMargin toGrpc() {
+        return this.grpc;
     }
 
     @Override
-    public Map<String, Class> getUniqueFieldsDescriptor() {
-        return Collections.emptyMap();
+    public JsonObject getMongoQueryParams() {
+        JsonObject queryParams = new JsonObject();
+        queryParams.put("clearer", this.grpc.getClearer());
+        queryParams.put("member", this.grpc.getMember());
+        queryParams.put("account", this.grpc.getAccount());
+        queryParams.put("liquidationGroup", this.grpc.getLiquidationGroup());
+        queryParams.put("liquidationGroupSplit", this.grpc.getLiquidationGroupSplit());
+        queryParams.put("marginCurrency", this.grpc.getMarginCurrency());
+        return queryParams;
     }
 
     @Override
-    public Map<String, Class> getNonKeysDescriptor() {
-        Map<String, Class<?>> nonKeys = new LinkedHashMap<>();
-        nonKeys.put("premiumMargin", Double.class);
-        nonKeys.put("marketRisk", Double.class);
-        nonKeys.put("liquRisk", Double.class);
-        nonKeys.put("longOptionCredit", Double.class);
-        nonKeys.put("variationPremiumPayment", Double.class);
-        return Collections.unmodifiableMap(nonKeys);
+    public JsonObject getMongoStoreDocument() {
+        JsonObject document = new JsonObject();
+        JsonObject snapshotDocument = new JsonObject();
+        snapshotDocument.put("snapshotID", this.grpc.getSnapshotId());
+        snapshotDocument.put("businessDate", this.grpc.getBusinessDate());
+        snapshotDocument.put("timestamp", this.grpc.getTimestamp());
+        snapshotDocument.put("premiumMargin", this.grpc.getPremiumMargin());
+        snapshotDocument.put("marketRisk", this.grpc.getMarketRisk());
+        snapshotDocument.put("liquRisk", this.grpc.getLiquRisk());
+        snapshotDocument.put("longOptionCredit", this.grpc.getLongOptionCredit());
+        snapshotDocument.put("variationPremiumPayment", this.grpc.getVariationPremiumPayment());
+        document.put("$set", this.getMongoQueryParams());
+        document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
+        return document;
+    }
+
+    public static MongoModelDescriptor getMongoModelDescriptor() {
+        return new MongoModelDescriptor() {
+            @Override
+            public String getCollectionName() {
+                return "LiquiGroupSplitMargin";
+            }
+
+            @Override
+            public Collection<String> getCommonFields() {
+                return Collections.unmodifiableList(Arrays.asList(
+                        "clearer",
+                        "member",
+                        "account",
+                        "liquidationGroup",
+                        "liquidationGroupSplit",
+                        "marginCurrency"
+                ));
+            }
+
+            @Override
+            public Collection<String> getSnapshotFields() {
+                return Collections.unmodifiableList(Arrays.asList(
+                        "snapshotID",
+                        "businessDate",
+                        "timestamp",
+                        "premiumMargin",
+                        "marketRisk",
+                        "liquRisk",
+                        "longOptionCredit",
+                        "variationPremiumPayment"
+                ));
+            }
+        };
     }
 }

@@ -12,8 +12,8 @@ public class TestConfig {
     private static final int DB_PORT =  Integer.getInteger("mongodb.port", 27017);
     public static final int API_PORT = Integer.getInteger("api.port", 8443);
     public static final int HEALTHCHECK_PORT = Integer.getInteger("healthcheck.port", 8080);
-    public static final SelfSignedCertificate API_SERVER_CERTIFICATE = SelfSignedCertificate.create();
-    public static final SelfSignedCertificate API_CLIENT_CERTIFICATE = SelfSignedCertificate.create();
+    public static final SelfSignedCertificate API_SERVER_CERTIFICATE = SelfSignedCertificate.create("localhost");
+    public static final SelfSignedCertificate API_CLIENT_CERTIFICATE = SelfSignedCertificate.create("localhost");
 
     private TestConfig() {
         // Empty

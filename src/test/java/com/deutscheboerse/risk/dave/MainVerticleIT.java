@@ -3,10 +3,9 @@ package com.deutscheboerse.risk.dave;
 import ch.qos.logback.classic.Logger;
 import com.deutscheboerse.risk.dave.log.TestAppender;
 import com.deutscheboerse.risk.dave.model.*;
-import com.deutscheboerse.risk.dave.persistence.MongoPersistenceService;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
-import com.deutscheboerse.risk.dave.utils.RestSender;
-import com.deutscheboerse.risk.dave.utils.RestSenderRegular;
+import com.deutscheboerse.risk.dave.utils.GrpcSender;
+import com.deutscheboerse.risk.dave.utils.GrpcSenderRegular;
 import com.deutscheboerse.risk.dave.utils.TestConfig;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -70,14 +69,14 @@ public class MainVerticleIT {
     private void testStoreCommands(TestContext context) {
         DeploymentOptions options = createDeploymentOptions();
         MongoClient mongoClient = this.createMongoClient(options.getConfig().getJsonObject("mongo"));
-        final RestSender restSender = new RestSenderRegular(this.vertx);
-        restSender.sendAllData(context.asyncAssertSuccess());
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(AccountMarginModel.class), ACCOUNT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupMarginModel.class), LIQUI_GROUP_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(LiquiGroupSplitMarginModel.class), LIQUI_GROUP_SPLIT_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(PoolMarginModel.class), POOL_MARGIN_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(PositionReportModel.class), POSITION_REPORT_COUNT);
-        this.testCountInCollection(context, mongoClient, MongoPersistenceService.getCollectionName(RiskLimitUtilizationModel.class), RISK_LIMIT_UTILIZATION_COUNT);
+        final GrpcSender grpcSender = new GrpcSenderRegular(this.vertx);
+        grpcSender.sendAllData(context.asyncAssertSuccess());
+        this.testCountSnapshotsInCollection(context, mongoClient, AccountMarginModel.getMongoModelDescriptor().getCollectionName(), ACCOUNT_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, LiquiGroupMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, LiquiGroupSplitMarginModel.getMongoModelDescriptor().getCollectionName(), LIQUI_GROUP_SPLIT_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, PoolMarginModel.getMongoModelDescriptor().getCollectionName(), POOL_MARGIN_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, PositionReportModel.getMongoModelDescriptor().getCollectionName(), POSITION_REPORT_COUNT, 2);
+        this.testCountSnapshotsInCollection(context, mongoClient, RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName(), RISK_LIMIT_UTILIZATION_COUNT, 2);
     }
 
 //    private void testQueryCommands(TestContext context) {
@@ -117,15 +116,16 @@ public class MainVerticleIT {
         this.vertx.deployVerticle(MainVerticle.class.getName(), options, context.asyncAssertFailure());
     }
 
-    private void testCountInCollection(TestContext  context, MongoClient mongoClient, String collection, long count) {
+    private void testCountSnapshotsInCollection(TestContext  context, MongoClient mongoClient, String collection, long expectedCount, int snapshotSize) {
+        JsonObject query = new JsonObject().put("snapshots", new JsonObject().put("$size", snapshotSize));
         AtomicLong currentCount = new AtomicLong();
         int tries = 0;
-        while (currentCount.get() != count && tries < 60) {
+        while (currentCount.get() != expectedCount && tries < 60) {
             Async asyncHistoryCount = context.async();
-            mongoClient.count(collection, new JsonObject(), ar -> {
+            mongoClient.find(collection, query, ar -> {
                 if (ar.succeeded()) {
-                    currentCount.set(ar.result());
-                    if (currentCount.get() == count && !asyncHistoryCount.isCompleted()) {
+                    currentCount.set(ar.result().size());
+                    if (currentCount.get() == expectedCount && !asyncHistoryCount.isCompleted()) {
                         asyncHistoryCount.complete();
                     }
                 } else {
@@ -139,7 +139,7 @@ public class MainVerticleIT {
             }
             tries++;
         }
-        context.assertEquals(count, currentCount.get());
+        context.assertEquals(expectedCount, currentCount.get());
     }
 
     @After
