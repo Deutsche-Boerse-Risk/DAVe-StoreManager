@@ -41,6 +41,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient update(String collection, JsonObject query, JsonObject update, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("update", null, resultHandler);
     }
@@ -51,6 +52,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient updateWithOptions(String collection, JsonObject query, JsonObject update, UpdateOptions options, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("updateWithOptions", null, resultHandler);
     }
@@ -61,6 +63,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient replace(String collection, JsonObject query, JsonObject replace, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("replace", null, resultHandler);
     }
@@ -71,6 +74,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient replaceWithOptions(String collection, JsonObject query, JsonObject replace, UpdateOptions options, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("replaceWithOptions", null, resultHandler);
     }
@@ -141,6 +145,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient remove(String collection, JsonObject query, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("remove", null, resultHandler);
     }
@@ -151,6 +156,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient removeWithOptions(String collection, JsonObject query, WriteOption writeOption, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("removeWithOptions", null, resultHandler);
     }
@@ -161,6 +167,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient removeOne(String collection, JsonObject query, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("removeOne", null, resultHandler);
     }
@@ -171,6 +178,7 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
+    @Deprecated
     public MongoClient removeOneWithOptions(String collection, JsonObject query, WriteOption writeOption, Handler<AsyncResult<Void>> resultHandler) {
         return this.process("removeOneWithOptions", null, resultHandler);
     }

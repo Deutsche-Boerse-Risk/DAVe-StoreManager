@@ -5,7 +5,6 @@ public class ApiConfig {
     private String sslKey = null;
     private String sslCert = null;
     private String[] sslTrustCerts = new String[] {};
-    private boolean sslRequireClientAuth = false;
 
     public int getPort() {
         return port;
@@ -21,9 +20,5 @@ public class ApiConfig {
 
     public String[] getSslTrustCerts() {
         return sslTrustCerts;
-    }
-
-    public boolean isSslRequireClientAuth() {
-        return sslRequireClientAuth;
     }
 }

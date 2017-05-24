@@ -26,7 +26,6 @@ The `api` section contains the configuration of the DAVe-StoreManager where the 
 | `sslKey` | Private key of the DAVe-MarginLoader | |
 | `sslCert` | Public key of the DAVe-MarginLoader | |
 | `sslTrustCerts` | List of trusted certification authorities | |
-| `sslRequireClientAuth` | Sets TLS client authentication as required | |
 
 ### Mongo
 

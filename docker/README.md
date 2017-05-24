@@ -42,4 +42,3 @@ Allows to configure logging parameters. Supported log levels are `off`, `error`,
 | `API_SSL_KEY` | Private key of the HTTP server in PEM format |  |
 | `API_SSL_CERT` | Public key of the HTTP server in CRT format |  |
 | `API_SSL_TRUST_CERTS` | List of trusted CA for SSL client authentication |  |
-| `API_SSL_REQUIRE_CLIENT_AUTH` | Make SSL Client Authentication required | `true` |
