@@ -3,8 +3,8 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.MongoWriteException;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -215,7 +215,7 @@ public class MongoPersistenceService implements PersistenceService {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
-            } else if (ar.cause() instanceof MongoWriteException && ((MongoWriteException) ar.cause()).getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE && remainingRetries > 1) {
+            } else if (ar.cause() instanceof MongoBulkWriteException && ((MongoBulkWriteException) ar.cause()).getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE && remainingRetries > 1) {
                 LOG.warn("Upsert failed - known Mongo issue, retrying ... ", ar.cause());
                 store(models, collection, remainingRetries - 1, resultHandler);
             } else {
