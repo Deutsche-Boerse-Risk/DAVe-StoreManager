@@ -18,7 +18,6 @@ import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -133,20 +132,9 @@ public class MongoPersistenceService implements PersistenceService {
     private <T>
     void query(RequestType type, String collection, JsonObject query, MongoModelDescriptor modelDescriptor, Function<JsonObject, T> modelFactory, Handler<AsyncResult<List<T>>> resultHandler) {
         LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
-        BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline;
-        switch(type) {
-            case LATEST:
-                getPipeline = MongoPersistenceService::getLatestPipeline;
-                break;
-            case HISTORY:
-                getPipeline = MongoPersistenceService::getHistoryPipeline;
-                break;
-            default:
-                LOG.error("Unknown request type {}", type);
-                resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unknown request type"));
-                return;
-        }
-        mongo.aggregate(collection, getPipeline.apply(query, modelDescriptor), res -> {
+        JsonArray pipeline = getPipeline(type, query, modelDescriptor);
+
+        mongo.aggregate(collection, pipeline, res -> {
             if (res.succeeded()) {
                 List<T> result = res.result().stream()
                         .map(modelFactory)
@@ -158,6 +146,17 @@ public class MongoPersistenceService implements PersistenceService {
                 resultHandler.handle(ServiceException.fail(QUERY_ERROR, res.cause().getMessage()));
             }
         });
+    }
+
+    private JsonArray getPipeline(RequestType type, JsonObject query, MongoModelDescriptor modelDescriptor) {
+        switch(type) {
+            case LATEST:
+                return MongoPersistenceService.getLatestPipeline(query, modelDescriptor);
+            case HISTORY:
+                return MongoPersistenceService.getHistoryPipeline(query, modelDescriptor);
+            default:
+                throw new AssertionError();
+        }
     }
 
     private static JsonArray getLatestPipeline(JsonObject params, MongoModelDescriptor modelDescriptor) {

@@ -246,6 +246,11 @@ public class MongoPersistenceServiceIT {
         testAppender.stop();
     }
 
+    @Test
+    public void testStoreEmptyCollection(TestContext context) {
+        persistenceProxy.storeAccountMargin(Collections.emptyList(), context.asyncAssertSuccess());
+    }
+
     private interface StoreFunction<T extends Model> {
         void store(List<T> models, Handler<AsyncResult<Void>> resultHandler);
     }

@@ -29,7 +29,7 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
     private final Vertx vertx;
     private final MongoDatabase db;
 
-    public MongoBulkClientImpl(Vertx vertx, JsonObject config, String dataSourceName) {
+    MongoBulkClientImpl(Vertx vertx, JsonObject config, String dataSourceName) {
         super(vertx, config, dataSourceName);
 
         MongoClientOptionsParser parser = new MongoClientOptionsParser(config);
@@ -40,7 +40,7 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
     @Override
     public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
         if (!writes.isEmpty()) {
-            this.db.getCollection(collection, JsonObject.class).bulkWrite(writes, toMongoClientUpdateResult(resultHandler));
+            this.db.getCollection(collection, JsonObject.class).bulkWrite(writes, toMongoBulkClientUpdateResult(resultHandler));
         } else {
             resultHandler.handle(Future.succeededFuture());
         }
@@ -57,21 +57,21 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
 
         AggregateIterable<JsonObject> view = this.db.getCollection(collection, JsonObject.class).aggregate(bsonPipeline, JsonObject.class);
         List<JsonObject> results = new ArrayList<>();
-        view.into(results, convertCallback(resultHandler, Function.identity()));
+        view.into(results, convertBulkCallback(resultHandler, Function.identity()));
         return this;
     }
 
-    private SingleResultCallback<BulkWriteResult> toMongoClientUpdateResult(Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
-        return convertCallback(resultHandler, result -> {
+    private SingleResultCallback<BulkWriteResult> toMongoBulkClientUpdateResult(Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
+        return convertBulkCallback(resultHandler, result -> {
             if (result.wasAcknowledged()) {
-                return convertToMongoClientUpdateResult(result.getMatchedCount(), new BsonInt32(0), result.getModifiedCount());
+                return convertToMongoBulkClientUpdateResult(result.getMatchedCount(), new BsonInt32(0), result.getModifiedCount());
             } else {
                 return null;
             }
         });
     }
 
-    private MongoClientUpdateResult convertToMongoClientUpdateResult(long docMatched, BsonValue upsertId, long docModified) {
+    private MongoClientUpdateResult convertToMongoBulkClientUpdateResult(long docMatched, BsonValue upsertId, long docModified) {
         JsonObject jsonUpsertId;
         if (upsertId != null) {
             JsonObjectCodec jsonObjectCodec = new JsonObjectCodec(new JsonObject());
@@ -88,9 +88,9 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
         return new MongoClientUpdateResult(docMatched, jsonUpsertId, docModified);
     }
 
-    private <T, R> SingleResultCallback<T> convertCallback(Handler<AsyncResult<R>> resultHandler, Function<T, R> converter) {
+    private <T, R> SingleResultCallback<T> convertBulkCallback(Handler<AsyncResult<R>> resultHandler, Function<T, R> converter) {
         Context context = vertx.getOrCreateContext();
-        return (result, error) -> {
+        return (result, error) ->
             context.runOnContext(v -> {
                 if (error != null) {
                     resultHandler.handle(Future.failedFuture(error));
@@ -98,6 +98,5 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
                     resultHandler.handle(Future.succeededFuture(converter.apply(result)));
                 }
             });
-        };
     }
 }
