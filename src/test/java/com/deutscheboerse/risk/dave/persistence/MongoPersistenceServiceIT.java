@@ -234,6 +234,18 @@ public class MongoPersistenceServiceIT {
                 RiskLimitUtilizationModel::buildFromJson);
     }
 
+    @Test
+    public void testDuplicateKeyWarning(TestContext context) throws InterruptedException {
+        MongoDuplicateKeyErrorClient mongoClientMock = new MongoDuplicateKeyErrorClient();
+        MongoPersistenceService persistenceService = new MongoPersistenceService(Vertx.vertx(), mongoClientMock);
+        AccountMarginModel model = DataHelper.getLastModelFromFile(DataHelper.ACCOUNT_MARGIN_FOLDER, 1,
+                AccountMarginModel::buildFromJson);
+        testAppender.start();
+        persistenceService.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
+        testAppender.waitForMessageContains(Level.WARN, "Upsert failed - known Mongo issue, retrying ...");
+        testAppender.stop();
+    }
+
     private interface StoreFunction<T extends Model> {
         void store(List<T> models, Handler<AsyncResult<Void>> resultHandler);
     }
