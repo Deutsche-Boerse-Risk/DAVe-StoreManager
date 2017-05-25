@@ -35,7 +35,7 @@ public class MongoPersistenceService implements PersistenceService {
     static final String POOL_MARGIN_COLLECTION = PoolMarginModel.getMongoModelDescriptor().getCollectionName();
     static final String POSITION_REPORT_COLLECTION = PositionReportModel.getMongoModelDescriptor().getCollectionName();
     static final String RISK_LIMIT_UTILIZATION_COLLECTION = RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName();
-    private static final int BULK_SIZE = 1000;
+    private static final int BULK_SIZE = 100;
 
     private final Vertx vertx;
     private final MongoBulkClient mongo;
