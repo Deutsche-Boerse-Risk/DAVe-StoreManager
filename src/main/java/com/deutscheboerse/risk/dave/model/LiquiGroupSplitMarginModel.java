@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
 import com.deutscheboerse.risk.dave.grpc.LiquiGroupSplitMargin;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -20,11 +19,7 @@ public class LiquiGroupSplitMarginModel implements Model<LiquiGroupSplitMargin> 
 
     public LiquiGroupSplitMarginModel(JsonObject json) {
         verifyJson(json);
-        try {
-            this.grpc = LiquiGroupSplitMargin.parseFrom(json.getBinary("grpc"));
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        this.grpc = json.mapTo(LiquiGroupSplitMargin.class);
     }
 
     public static LiquiGroupSplitMarginModel buildFromJson(JsonObject json) {

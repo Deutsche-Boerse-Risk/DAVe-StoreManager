@@ -1,16 +1,18 @@
 package com.deutscheboerse.risk.dave.persistence;
 
+import com.mongodb.client.model.WriteModel;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.*;
+import io.vertx.ext.mongo.impl.MongoBulkClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MongoErrorClient implements io.vertx.ext.mongo.MongoClient {
+public class MongoErrorClient implements MongoBulkClient {
 
     private final JsonObject config;
 
@@ -237,11 +239,21 @@ public class MongoErrorClient implements io.vertx.ext.mongo.MongoClient {
     }
 
     @Override
+    public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
+        return this.process("bulkWrite", new MongoClientUpdateResult(), resultHandler);
+    }
+
+    @Override
+    public MongoBulkClient aggregate(String collection, JsonArray pipeline, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+        return this.process("aggregate", new ArrayList<>(), resultHandler);
+    }
+
+    @Override
     public void close() {
 
     }
 
-    private <T> MongoClient process(String functionName, T defaultResult, Handler<AsyncResult<T>> resultHandler) {
+    private <T> MongoBulkClient process(String functionName, T defaultResult, Handler<AsyncResult<T>> resultHandler) {
         if (this.config.getJsonArray("functionsToFail", new JsonArray()).contains(functionName)) {
             resultHandler.handle(Future.failedFuture("Error in " + functionName));
         } else {

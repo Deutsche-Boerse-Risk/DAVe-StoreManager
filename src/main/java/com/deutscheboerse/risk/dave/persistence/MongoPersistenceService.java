@@ -3,21 +3,21 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
-import com.mongodb.MongoWriteException;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.client.model.WriteModel;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.IndexOptions;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.mongo.MongoClientUpdateResult;
 import io.vertx.ext.mongo.UpdateOptions;
+import io.vertx.ext.mongo.impl.MongoBulkClient;
 import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,15 +34,16 @@ public class MongoPersistenceService implements PersistenceService {
     static final String POOL_MARGIN_COLLECTION = PoolMarginModel.getMongoModelDescriptor().getCollectionName();
     static final String POSITION_REPORT_COLLECTION = PositionReportModel.getMongoModelDescriptor().getCollectionName();
     static final String RISK_LIMIT_UTILIZATION_COLLECTION = RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName();
+    private static final int BULK_SIZE = 100;
 
     private final Vertx vertx;
-    private final MongoClient mongo;
+    private final MongoBulkClient mongo;
     private final HealthCheck healthCheck;
     private boolean closed;
     private final ConnectionManager connectionManager = new ConnectionManager();
 
     @Inject
-    public MongoPersistenceService(Vertx vertx, MongoClient mongo) {
+    public MongoPersistenceService(Vertx vertx, MongoBulkClient mongo) {
         this.vertx = vertx;
         this.healthCheck = new HealthCheck(this.vertx);
         this.mongo = mongo;
@@ -131,23 +132,11 @@ public class MongoPersistenceService implements PersistenceService {
     private <T>
     void query(RequestType type, String collection, JsonObject query, MongoModelDescriptor modelDescriptor, Function<JsonObject, T> modelFactory, Handler<AsyncResult<List<T>>> resultHandler) {
         LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
-        BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline;
-        switch(type) {
-            case LATEST:
-                getPipeline = MongoPersistenceService::getLatestPipeline;
-                break;
-            case HISTORY:
-                getPipeline = MongoPersistenceService::getHistoryPipeline;
-                break;
-            default:
-                LOG.error("Unknown request type {}", type);
-                resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unknown request type"));
-                return;
-        }
-        mongo.runCommand("aggregate", MongoPersistenceService.getCommand(collection, query, modelDescriptor, getPipeline), res -> {
+        JsonArray pipeline = getPipeline(type, query, modelDescriptor);
+
+        mongo.aggregate(collection, pipeline, res -> {
             if (res.succeeded()) {
-                List<T> result = res.result().getJsonArray("result").stream()
-                        .map(json -> (JsonObject) json)
+                List<T> result = res.result().stream()
                         .map(modelFactory)
                         .collect(Collectors.toList());
                 resultHandler.handle(Future.succeededFuture(result));
@@ -157,14 +146,17 @@ public class MongoPersistenceService implements PersistenceService {
                 resultHandler.handle(ServiceException.fail(QUERY_ERROR, res.cause().getMessage()));
             }
         });
-
     }
 
-    private static JsonObject getCommand(String collection, JsonObject params, MongoModelDescriptor modelDescriptor, BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline) {
-        return new JsonObject()
-                .put("aggregate", collection)
-                .put("pipeline", getPipeline.apply(params, modelDescriptor))
-                .put("allowDiskUse", true);
+    private JsonArray getPipeline(RequestType type, JsonObject query, MongoModelDescriptor modelDescriptor) {
+        switch(type) {
+            case LATEST:
+                return MongoPersistenceService.getLatestPipeline(query, modelDescriptor);
+            case HISTORY:
+                return MongoPersistenceService.getHistoryPipeline(query, modelDescriptor);
+            default:
+                throw new AssertionError();
+        }
     }
 
     private static JsonArray getLatestPipeline(JsonObject params, MongoModelDescriptor modelDescriptor) {
@@ -213,7 +205,10 @@ public class MongoPersistenceService implements PersistenceService {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
-            } else if (ar.cause() instanceof MongoWriteException && ((MongoWriteException) ar.cause()).getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE && remainingRetries > 1) {
+            } else if (ar.cause() instanceof MongoBulkWriteException
+                    && ((MongoBulkWriteException)ar.cause()).getWriteErrors().stream()
+                        .anyMatch(bulkWriteError -> bulkWriteError.getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE)
+                    && remainingRetries > 1) {
                 LOG.warn("Upsert failed - known Mongo issue, retrying ... ", ar.cause());
                 store(models, collection, remainingRetries - 1, resultHandler);
             } else {
@@ -237,16 +232,29 @@ public class MongoPersistenceService implements PersistenceService {
 
     private Future<Void> storeIntoCollection(Collection<? extends Model> models, String collection) {
         List<Future> futureList = new ArrayList<>();
+        List<WriteModel<JsonObject>> bulkWrites = new ArrayList<>();
+
+        Runnable writeBulk = () -> {
+            Future<MongoClientUpdateResult> bulkFuture = Future.future();
+            this.mongo.bulkWrite(bulkWrites, collection, bulkFuture);
+            futureList.add(bulkFuture);
+            bulkWrites.clear();
+        };
+
         models.forEach(model -> {
-            Future<MongoClientUpdateResult> future = Future.future();
-            LOG.trace("Storing message into {} with body {}", collection, model.toJson());
-            mongo.updateCollectionWithOptions(collection,
-                    model.getMongoQueryParams(),
-                    model.getMongoStoreDocument(),
-                    new UpdateOptions().setUpsert(true),
-                    future);
-            futureList.add(future);
+            JsonObject queryParams = model.getMongoQueryParams();
+            JsonObject document = model.getMongoStoreDocument();
+            LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
+
+            bulkWrites.add(MongoBulkClient.newWriteModel(queryParams, document, new UpdateOptions().setUpsert(true)));
+
+            if (bulkWrites.size() >= BULK_SIZE) {
+                writeBulk.run();
+            }
         });
+
+        writeBulk.run();
+
         return CompositeFuture.all(futureList).map((Void) null);
     }
 

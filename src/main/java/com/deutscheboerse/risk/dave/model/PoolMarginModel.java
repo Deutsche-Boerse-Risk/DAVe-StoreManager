@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
 import com.deutscheboerse.risk.dave.grpc.PoolMargin;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -20,11 +19,7 @@ public class PoolMarginModel implements Model<PoolMargin> {
 
     public PoolMarginModel(JsonObject json) {
         verifyJson(json);
-        try {
-            this.grpc = PoolMargin.parseFrom(json.getBinary("grpc"));
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        this.grpc = json.mapTo(PoolMargin.class);
     }
 
     public static PoolMarginModel buildFromJson(JsonObject json) {
