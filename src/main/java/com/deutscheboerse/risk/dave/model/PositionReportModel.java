@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
 import com.deutscheboerse.risk.dave.grpc.PositionReport;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -20,11 +19,7 @@ public class PositionReportModel implements Model<PositionReport> {
 
     public PositionReportModel(JsonObject json) {
         verifyJson(json);
-        try {
-            this.grpc = PositionReport.parseFrom(json.getBinary("grpc"));
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        this.grpc = json.mapTo(PositionReport.class);
     }
 
     public static PositionReportModel buildFromJson(JsonObject json) {

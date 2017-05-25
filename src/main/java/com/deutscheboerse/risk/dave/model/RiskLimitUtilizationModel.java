@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
 import com.deutscheboerse.risk.dave.grpc.RiskLimitUtilization;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -20,11 +19,7 @@ public class RiskLimitUtilizationModel implements Model<RiskLimitUtilization> {
 
     public RiskLimitUtilizationModel(JsonObject json) {
         verifyJson(json);
-        try {
-            this.grpc = RiskLimitUtilization.parseFrom(json.getBinary("grpc"));
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        this.grpc = json.mapTo(RiskLimitUtilization.class);
     }
 
     public static RiskLimitUtilizationModel buildFromJson(JsonObject json) {

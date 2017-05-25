@@ -1,7 +1,6 @@
 package com.deutscheboerse.risk.dave.model;
 
 import com.deutscheboerse.risk.dave.grpc.LiquiGroupMargin;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -20,11 +19,7 @@ public class LiquiGroupMarginModel implements Model<LiquiGroupMargin> {
 
     public LiquiGroupMarginModel(JsonObject json) {
         verifyJson(json);
-        try {
-            this.grpc =  LiquiGroupMargin.parseFrom(json.getBinary("grpc"));
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        this.grpc = json.mapTo(LiquiGroupMargin.class);
     }
 
     public static LiquiGroupMarginModel buildFromJson(JsonObject json) {
