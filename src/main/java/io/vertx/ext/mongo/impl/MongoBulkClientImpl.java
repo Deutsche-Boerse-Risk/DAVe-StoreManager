@@ -1,15 +1,14 @@
 package io.vertx.ext.mongo.impl;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.AggregateIterable;
 import com.mongodb.async.client.MongoDatabase;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
 import io.vertx.core.*;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.mongo.MongoClientUpdateResult;
-import io.vertx.ext.mongo.UpdateOptions;
 import io.vertx.ext.mongo.impl.codec.json.JsonObjectCodec;
 import io.vertx.ext.mongo.impl.config.MongoClientOptionsParser;
 import org.bson.BsonDocument;
@@ -19,8 +18,11 @@ import org.bson.BsonValue;
 import org.bson.codecs.DecoderContext;
 import org.bson.conversions.Bson;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import static java.util.Objects.requireNonNull;
 
 public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkClient {
 
@@ -36,21 +38,26 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
     }
 
     @Override
-    public MongoBulkClient queueBulkUpdate(List<WriteModel<JsonObject>> writes, JsonObject query, JsonObject update, UpdateOptions options) {
-        Bson bquery = new JsonObjectBsonAdapter(query);
-        Bson bupdate = new JsonObjectBsonAdapter(update);
-        com.mongodb.client.model.UpdateOptions updateOptions = new com.mongodb.client.model.UpdateOptions().upsert(options.isUpsert());
-        writes.add(new UpdateOneModel<>(bquery, bupdate, updateOptions));
-        return this;
-    }
-
-    @Override
     public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
         if (!writes.isEmpty()) {
             this.db.getCollection(collection, JsonObject.class).bulkWrite(writes, toMongoClientUpdateResult(resultHandler));
         } else {
             resultHandler.handle(Future.succeededFuture());
         }
+        return this;
+    }
+
+    @Override
+    public MongoBulkClient aggregate(String collection, JsonArray pipeline, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+        requireNonNull(pipeline, "pipeline cannot be null");
+        requireNonNull(resultHandler, "resultHandler cannot be null");
+
+        List<Bson> bsonPipeline = new ArrayList<>();
+        pipeline.forEach(json -> bsonPipeline.add(new JsonObjectBsonAdapter((JsonObject)json)));
+
+        AggregateIterable<JsonObject> view = this.db.getCollection(collection, JsonObject.class).aggregate(bsonPipeline, JsonObject.class);
+        List<JsonObject> results = new ArrayList<>();
+        view.into(results, convertCallback(resultHandler, Function.identity()));
         return this;
     }
 

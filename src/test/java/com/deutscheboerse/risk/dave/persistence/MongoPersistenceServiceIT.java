@@ -157,7 +157,7 @@ public class MongoPersistenceServiceIT {
 
     @Test
     public void testConnectionStatusErrorAfterQuery(TestContext context) throws InterruptedException {
-        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("runCommand"));
+        JsonObject proxyConfig = new JsonObject().put("functionsToFail", new JsonArray().add("aggregate").add("runCommand"));
 
         final PersistenceService persistenceErrorProxy = getPersistenceErrorProxy(proxyConfig);
         persistenceErrorProxy.initialize(context.asyncAssertSuccess());

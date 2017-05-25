@@ -239,13 +239,13 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
-    public MongoBulkClient queueBulkUpdate(List<WriteModel<JsonObject>> writes, JsonObject query, JsonObject update, UpdateOptions options) {
-        return this.process("queueBulkUpdate", new JsonObject(), res -> {});
+    public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
+        return this.process("bulkWrite", new MongoClientUpdateResult(), resultHandler);
     }
 
     @Override
-    public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
-        return this.process("bulkWrite", new MongoClientUpdateResult(), resultHandler);
+    public MongoBulkClient aggregate(String collection, JsonArray pipeline, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+        return this.process("aggregate", new ArrayList<>(), resultHandler);
     }
 
     @Override

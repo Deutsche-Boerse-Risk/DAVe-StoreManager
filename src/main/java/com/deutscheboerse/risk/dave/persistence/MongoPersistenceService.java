@@ -146,10 +146,9 @@ public class MongoPersistenceService implements PersistenceService {
                 resultHandler.handle(ServiceException.fail(QUERY_ERROR, "Unknown request type"));
                 return;
         }
-        mongo.runCommand("aggregate", MongoPersistenceService.getCommand(collection, query, modelDescriptor, getPipeline), res -> {
+        mongo.aggregate(collection, getPipeline.apply(query, modelDescriptor), res -> {
             if (res.succeeded()) {
-                List<T> result = res.result().getJsonArray("result").stream()
-                        .map(json -> (JsonObject) json)
+                List<T> result = res.result().stream()
                         .map(modelFactory)
                         .collect(Collectors.toList());
                 resultHandler.handle(Future.succeededFuture(result));
@@ -159,14 +158,6 @@ public class MongoPersistenceService implements PersistenceService {
                 resultHandler.handle(ServiceException.fail(QUERY_ERROR, res.cause().getMessage()));
             }
         });
-
-    }
-
-    private static JsonObject getCommand(String collection, JsonObject params, MongoModelDescriptor modelDescriptor, BiFunction<JsonObject, MongoModelDescriptor, JsonArray> getPipeline) {
-        return new JsonObject()
-                .put("aggregate", collection)
-                .put("pipeline", getPipeline.apply(params, modelDescriptor))
-                .put("allowDiskUse", true);
     }
 
     private static JsonArray getLatestPipeline(JsonObject params, MongoModelDescriptor modelDescriptor) {
@@ -215,7 +206,10 @@ public class MongoPersistenceService implements PersistenceService {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
-            } else if (ar.cause() instanceof MongoBulkWriteException && ((MongoBulkWriteException) ar.cause()).getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE && remainingRetries > 1) {
+            } else if (ar.cause() instanceof MongoBulkWriteException
+                    && ((MongoBulkWriteException)ar.cause()).getWriteErrors().stream()
+                        .anyMatch(bulkWriteError -> bulkWriteError.getCode() == MONGO_DUPLICATE_KEY_ERROR_CODE)
+                    && remainingRetries > 1) {
                 LOG.warn("Upsert failed - known Mongo issue, retrying ... ", ar.cause());
                 store(models, collection, remainingRetries - 1, resultHandler);
             } else {
@@ -253,7 +247,7 @@ public class MongoPersistenceService implements PersistenceService {
             JsonObject document = model.getMongoStoreDocument();
             LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
 
-            mongo.queueBulkUpdate(bulkWrites, queryParams, document, new UpdateOptions().setUpsert(true));
+            bulkWrites.add(MongoBulkClient.newWriteModel(queryParams, document, new UpdateOptions().setUpsert(true)));
 
             if (bulkWrites.size() >= BULK_SIZE) {
                 writeBulk.run();
