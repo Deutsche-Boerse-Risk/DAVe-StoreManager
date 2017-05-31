@@ -1,16 +1,18 @@
 package io.vertx.ext.mongo.impl;
 
+import com.deutscheboerse.risk.dave.model.Model;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.AggregateIterable;
+import com.mongodb.async.client.MongoClients;
 import com.mongodb.async.client.MongoDatabase;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.model.WriteModel;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClientUpdateResult;
 import io.vertx.ext.mongo.impl.codec.json.JsonObjectCodec;
-import io.vertx.ext.mongo.impl.config.MongoClientOptionsParser;
+import io.vertx.ext.mongo.impl.config.MongoBulkClientOptionsParser;
+import io.vertx.ext.mongo.model.WriteModel;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonInt32;
@@ -21,6 +23,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,31 +35,32 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
     MongoBulkClientImpl(Vertx vertx, JsonObject config, String dataSourceName) {
         super(vertx, config, dataSourceName);
 
-        MongoClientOptionsParser parser = new MongoClientOptionsParser(config);
+        MongoBulkClientOptionsParser parser = new MongoBulkClientOptionsParser(config);
         this.vertx = vertx;
+        this.mongo = MongoClients.create(parser.settings());
         this.db = this.mongo.getDatabase(parser.database());
     }
 
     @Override
-    public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
-        if (!writes.isEmpty()) {
-            this.db.getCollection(collection, JsonObject.class).bulkWrite(writes, toMongoBulkClientUpdateResult(resultHandler));
-        } else {
-            resultHandler.handle(Future.succeededFuture());
-        }
+    public <T extends Model> MongoBulkClient bulkWrite(List<WriteModel<T>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
+        List<com.mongodb.client.model.WriteModel<? extends Model>> mongoWrites = writes.stream()
+                .map(WriteModel::getMongoWriteModel)
+                .collect(Collectors.toList());
+
+        this.db.getCollection(collection, Model.class).bulkWrite(mongoWrites, toMongoBulkClientUpdateResult(resultHandler));
         return this;
     }
 
     @Override
-    public MongoBulkClient aggregate(String collection, JsonArray pipeline, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    public <T extends Model> MongoBulkClient aggregate(String collection, JsonArray pipeline, Class<T> modelType, Handler<AsyncResult<List<T>>> resultHandler) {
         requireNonNull(pipeline, "pipeline cannot be null");
         requireNonNull(resultHandler, "resultHandler cannot be null");
 
         List<Bson> bsonPipeline = new ArrayList<>();
         pipeline.forEach(json -> bsonPipeline.add(new JsonObjectBsonAdapter((JsonObject)json)));
 
-        AggregateIterable<JsonObject> view = this.db.getCollection(collection, JsonObject.class).aggregate(bsonPipeline, JsonObject.class);
-        List<JsonObject> results = new ArrayList<>();
+        AggregateIterable<T> view = this.db.getCollection(collection, modelType).aggregate(bsonPipeline, modelType);
+        List<T> results = new ArrayList<>();
         view.into(results, convertBulkCallback(resultHandler, Function.identity()));
         return this;
     }
