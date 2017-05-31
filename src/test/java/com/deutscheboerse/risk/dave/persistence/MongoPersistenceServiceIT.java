@@ -235,6 +235,24 @@ public class MongoPersistenceServiceIT {
     }
 
     @Test
+    public void testAccountMarginStoreWithTracing(TestContext context) throws InterruptedException {
+        Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
+        rootLogger.detachAppender(stdout);
+        Level level = rootLogger.getLevel();
+        rootLogger.setLevel(Level.TRACE);
+        testAppender.start();
+        this.testStore(context,
+                DataHelper.ACCOUNT_MARGIN_FOLDER,
+                MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION,
+                persistenceProxy::storeAccountMargin,
+                persistenceProxy::queryAccountMargin,
+                AccountMarginModel::buildFromJson);
+        testAppender.waitForMessageContains(Level.TRACE, "Storing message into AccountMargin with body");
+        rootLogger.setLevel(level);
+        rootLogger.addAppender(stdout);
+    }
+
+    @Test
     public void testDuplicateKeyWarning(TestContext context) throws InterruptedException {
         MongoDuplicateKeyErrorClient mongoClientMock = new MongoDuplicateKeyErrorClient();
         MongoPersistenceService persistenceService = new MongoPersistenceService(Vertx.vertx(), mongoClientMock);
