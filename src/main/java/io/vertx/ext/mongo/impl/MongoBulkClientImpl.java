@@ -10,14 +10,8 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClientUpdateResult;
-import io.vertx.ext.mongo.impl.codec.json.JsonObjectCodec;
 import io.vertx.ext.mongo.impl.config.MongoBulkClientOptionsParser;
 import io.vertx.ext.mongo.model.WriteModel;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
-import org.bson.BsonInt32;
-import org.bson.BsonValue;
-import org.bson.codecs.DecoderContext;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -68,28 +62,11 @@ public class MongoBulkClientImpl extends MongoClientImpl implements MongoBulkCli
     private SingleResultCallback<BulkWriteResult> toMongoBulkClientUpdateResult(Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
         return convertBulkCallback(resultHandler, result -> {
             if (result.wasAcknowledged()) {
-                return convertToMongoBulkClientUpdateResult(result.getMatchedCount(), new BsonInt32(0), result.getModifiedCount());
+                return new MongoClientUpdateResult(result.getMatchedCount(), null, result.getModifiedCount());
             } else {
                 return null;
             }
         });
-    }
-
-    private MongoClientUpdateResult convertToMongoBulkClientUpdateResult(long docMatched, BsonValue upsertId, long docModified) {
-        JsonObject jsonUpsertId;
-        if (upsertId != null) {
-            JsonObjectCodec jsonObjectCodec = new JsonObjectCodec(new JsonObject());
-
-            BsonDocument upsertIdDocument = new BsonDocument();
-            upsertIdDocument.append(MongoClientUpdateResult.ID_FIELD, upsertId);
-
-            BsonDocumentReader bsonDocumentReader = new BsonDocumentReader(upsertIdDocument);
-            jsonUpsertId = jsonObjectCodec.decode(bsonDocumentReader, DecoderContext.builder().build());
-        } else {
-            jsonUpsertId = null;
-        }
-
-        return new MongoClientUpdateResult(docMatched, jsonUpsertId, docModified);
     }
 
     private <T, R> SingleResultCallback<T> convertBulkCallback(Handler<AsyncResult<R>> resultHandler, Function<T, R> converter) {
