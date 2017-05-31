@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 public class ModelCodec<T extends Model> implements Codec<T> {
 
-    static final Codec<JsonObject> JSON_OBJECT_CODEC = new JsonObjectCodec(new JsonObject());
+    private static final Codec<JsonObject> JSON_OBJECT_CODEC = new JsonObjectCodec(new JsonObject());
 
     private final Function<JsonObject, T> modelBuilder;
     private final Class<T> encoderClass;

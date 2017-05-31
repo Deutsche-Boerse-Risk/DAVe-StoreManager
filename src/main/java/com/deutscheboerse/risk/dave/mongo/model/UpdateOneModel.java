@@ -1,8 +1,8 @@
 package com.deutscheboerse.risk.dave.mongo.model;
 
-import com.deutscheboerse.risk.dave.mongo.codec.QueryModelBsonAdapter;
-import com.deutscheboerse.risk.dave.mongo.codec.UpdateModelBsonAdapter;
 import com.deutscheboerse.risk.dave.model.Model;
+import com.deutscheboerse.risk.dave.mongo.codec.QueryParamsBsonAdapter;
+import com.deutscheboerse.risk.dave.mongo.codec.StoreDocumentBsonAdapter;
 import com.mongodb.client.model.UpdateOptions;
 import io.vertx.ext.mongo.model.WriteModel;
 
@@ -19,10 +19,10 @@ public class UpdateOneModel<T extends Model> implements WriteModel<T> {
     }
 
     @Override
-    public com.mongodb.client.model.WriteModel<T> getMongoWriteModel() {
+    public com.mongodb.client.model.UpdateOneModel<T> getMongoWriteModel() {
         return new com.mongodb.client.model.UpdateOneModel<>(
-                new QueryModelBsonAdapter<>(model),
-                new UpdateModelBsonAdapter<>(model),
+                new QueryParamsBsonAdapter<>(model),
+                new StoreDocumentBsonAdapter<>(model),
                 updateOptions.isUpsert() ? UPSERT_OPTIONS : NO_UPSERT_OPTIONS);
     }
 }
