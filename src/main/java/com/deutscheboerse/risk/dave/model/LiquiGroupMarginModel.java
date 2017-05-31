@@ -72,7 +72,7 @@ public class LiquiGroupMarginModel implements Model<LiquiGroupMargin> {
         snapshotDocument.put("additionalMargin", this.grpc.getAdditionalMargin());
         snapshotDocument.put("unadjustedMarginRequirement", this.grpc.getUnadjustedMarginRequirement());
         snapshotDocument.put("variationPremiumPayment", this.grpc.getVariationPremiumPayment());
-        document.put("$set", this.getMongoQueryParams());
+        document.put("$setOnInsert", this.getMongoQueryParams());
         document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
         return document;
     }

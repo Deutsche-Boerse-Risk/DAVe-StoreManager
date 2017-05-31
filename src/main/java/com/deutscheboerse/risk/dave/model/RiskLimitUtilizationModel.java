@@ -64,7 +64,7 @@ public class RiskLimitUtilizationModel implements Model<RiskLimitUtilization> {
         snapshotDocument.put("warningLevel", this.grpc.getWarningLevel());
         snapshotDocument.put("throttleLevel", this.grpc.getThrottleLevel());
         snapshotDocument.put("rejectLevel", this.grpc.getRejectLevel());
-        document.put("$set", this.getMongoQueryParams());
+        document.put("$setOnInsert", this.getMongoQueryParams());
         document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
         return document;
     }

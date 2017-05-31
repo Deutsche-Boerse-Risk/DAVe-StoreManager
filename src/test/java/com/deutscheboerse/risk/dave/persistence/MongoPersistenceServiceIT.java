@@ -293,7 +293,7 @@ public class MongoPersistenceServiceIT {
 
     private static JsonObject getMongoDocumentFromModel(Model model) {
         JsonObject expectedResult = new JsonObject();
-        expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$set"));
+        expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$setOnInsert"));
         expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$addToSet").getJsonObject("snapshots"));
         return expectedResult;
     }

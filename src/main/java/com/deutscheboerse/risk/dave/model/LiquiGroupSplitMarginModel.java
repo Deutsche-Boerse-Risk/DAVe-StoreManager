@@ -70,7 +70,7 @@ public class LiquiGroupSplitMarginModel implements Model<LiquiGroupSplitMargin> 
         snapshotDocument.put("liquRisk", this.grpc.getLiquRisk());
         snapshotDocument.put("longOptionCredit", this.grpc.getLongOptionCredit());
         snapshotDocument.put("variationPremiumPayment", this.grpc.getVariationPremiumPayment());
-        document.put("$set", this.getMongoQueryParams());
+        document.put("$setOnInsert", this.getMongoQueryParams());
         document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
         return document;
     }
