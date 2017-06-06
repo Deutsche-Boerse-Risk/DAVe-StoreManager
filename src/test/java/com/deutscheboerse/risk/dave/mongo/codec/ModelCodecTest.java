@@ -1,9 +1,6 @@
 package com.deutscheboerse.risk.dave.mongo.codec;
 
-import com.deutscheboerse.risk.dave.grpc.PoolMargin;
-import com.deutscheboerse.risk.dave.model.Model;
 import com.deutscheboerse.risk.dave.model.PoolMarginModel;
-import com.deutscheboerse.risk.dave.model.RiskLimitUtilizationModel;
 import com.deutscheboerse.risk.dave.utils.DataHelper;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.impl.JsonObjectBsonAdapter;
@@ -28,7 +25,7 @@ public class ModelCodecTest {
             CodecRegistries.fromProviders(new ModelCodecProvider()));
     private static final Codec<PoolMarginModel> CODEC = CODEC_REGISTRY.get(PoolMarginModel.class);
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testEncode(TestContext context) {
         PoolMarginModel model = DataHelper.getLastModelFromFile(
                 DataHelper.POOL_MARGIN_FOLDER, 1, PoolMarginModel::buildFromJson);

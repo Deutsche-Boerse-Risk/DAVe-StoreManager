@@ -25,7 +25,7 @@ public class ModelCodec<T extends Model> implements Codec<T> {
 
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext ctx) {
-        JSON_OBJECT_CODEC.encode(writer, value.getMongoStoreDocument(), ctx);
+        throw new UnsupportedOperationException();
     }
 
     @Override
