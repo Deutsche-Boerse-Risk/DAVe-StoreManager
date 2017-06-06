@@ -3,7 +3,6 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
-import com.deutscheboerse.risk.dave.mongo.model.UpdateOneModel;
 import com.google.common.collect.Lists;
 import com.mongodb.MongoBulkWriteException;
 import io.vertx.core.*;
@@ -11,11 +10,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.mongo.BulkOperation;
 import io.vertx.ext.mongo.IndexOptions;
-import io.vertx.ext.mongo.MongoClientUpdateResult;
-import io.vertx.ext.mongo.UpdateOptions;
+import io.vertx.ext.mongo.MongoClientBulkWriteResult;
 import io.vertx.ext.mongo.impl.MongoBulkClient;
-import io.vertx.ext.mongo.model.WriteModel;
 import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
@@ -231,19 +229,20 @@ public class MongoPersistenceService implements PersistenceService {
     private Future<Void> storeIntoCollection(List<? extends Model> models, String collection) {
         List<Future> futureList = new ArrayList<>();
 
-        UpdateOptions updateOptions = new UpdateOptions().setUpsert(true);
         Lists.partition(models, MONGO_BULK_WRITE_SIZE).forEach(modelsBulk -> {
-            List<WriteModel<Model>> bulkWrites = new ArrayList<>();
-            modelsBulk.forEach(model -> {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Storing message into {} with body {}", collection,
-                            model.getMongoStoreDocument().encodePrettily());
-                }
-                bulkWrites.add(new UpdateOneModel<>(model, updateOptions));
-            });
-            Future<MongoClientUpdateResult> bulkFuture = Future.future();
-            this.mongo.bulkWrite(bulkWrites, collection, bulkFuture);
-            futureList.add(bulkFuture);
+            List<BulkOperation> bulkWrites = modelsBulk.stream()
+                    .peek(model -> {
+                        if (LOG.isTraceEnabled()) {
+                            LOG.trace("Storing message into {} with body {}", collection,
+                                    model.getMongoStoreDocument().encodePrettily());
+                        }
+                    })
+                    .map(model -> BulkOperation.createUpdate(model.getMongoQueryParams(), model.getMongoStoreDocument())
+                            .setUpsert(true))
+                    .collect(Collectors.toList());
+            Future<MongoClientBulkWriteResult> bulkResult = Future.future();
+            this.mongo.bulkWrite(collection, bulkWrites, bulkResult);
+            futureList.add(bulkResult);
         });
 
         return CompositeFuture.all(futureList).map((Void) null);

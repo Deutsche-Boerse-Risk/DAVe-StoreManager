@@ -8,7 +8,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.*;
 import io.vertx.ext.mongo.impl.MongoBulkClient;
-import io.vertx.ext.mongo.model.WriteModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -240,8 +239,13 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
-    public <T extends Model> MongoBulkClient bulkWrite(List<WriteModel<T>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
-        return this.process("bulkWrite", new MongoClientUpdateResult(), resultHandler);
+    public MongoClient bulkWrite(String collection, List<BulkOperation> operations, Handler<AsyncResult<MongoClientBulkWriteResult>> resultHandler) {
+        return this.process("bulkWrite", new MongoClientBulkWriteResult(), resultHandler);
+    }
+
+    @Override
+    public MongoClient bulkWriteWithOptions(String collection, List<BulkOperation> operations, BulkWriteOptions bulkWriteOptions, Handler<AsyncResult<MongoClientBulkWriteResult>> resultHandler) {
+        return this.process("bulkWriteWithOptions", new MongoClientBulkWriteResult(), resultHandler);
     }
 
     @Override
