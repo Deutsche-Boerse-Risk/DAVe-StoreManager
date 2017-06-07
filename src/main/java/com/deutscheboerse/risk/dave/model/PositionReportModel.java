@@ -110,7 +110,7 @@ public class PositionReportModel implements Model<PositionReport> {
         snapshotDocument.put("normalizedVega", this.grpc.getNormalizedVega());
         snapshotDocument.put("normalizedRho", this.grpc.getNormalizedRho());
         snapshotDocument.put("normalizedTheta", this.grpc.getNormalizedTheta());
-        document.put("$set", this.getMongoQueryParams());
+        document.put("$setOnInsert", this.getMongoQueryParams());
         document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
         return document;
     }

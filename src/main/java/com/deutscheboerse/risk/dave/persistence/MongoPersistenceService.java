@@ -3,22 +3,21 @@ package com.deutscheboerse.risk.dave.persistence;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck;
 import com.deutscheboerse.risk.dave.healthcheck.HealthCheck.Component;
 import com.deutscheboerse.risk.dave.model.*;
+import com.google.common.collect.Lists;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.client.model.WriteModel;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.mongo.BulkOperation;
 import io.vertx.ext.mongo.IndexOptions;
-import io.vertx.ext.mongo.MongoClientUpdateResult;
-import io.vertx.ext.mongo.UpdateOptions;
+import io.vertx.ext.mongo.MongoClientBulkWriteResult;
 import io.vertx.ext.mongo.impl.MongoBulkClient;
 import io.vertx.serviceproxy.ServiceException;
 
 import javax.inject.Inject;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MongoPersistenceService implements PersistenceService {
@@ -34,7 +33,7 @@ public class MongoPersistenceService implements PersistenceService {
     static final String POOL_MARGIN_COLLECTION = PoolMarginModel.getMongoModelDescriptor().getCollectionName();
     static final String POSITION_REPORT_COLLECTION = PositionReportModel.getMongoModelDescriptor().getCollectionName();
     static final String RISK_LIMIT_UTILIZATION_COLLECTION = RiskLimitUtilizationModel.getMongoModelDescriptor().getCollectionName();
-    private static final int BULK_SIZE = 100;
+    private static final int MONGO_BULK_WRITE_SIZE = 100;
 
     private final Vertx vertx;
     private final MongoBulkClient mongo;
@@ -101,45 +100,42 @@ public class MongoPersistenceService implements PersistenceService {
 
     @Override
     public void queryAccountMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<AccountMarginModel>>> resultHandler) {
-        this.query(type, ACCOUNT_MARGIN_COLLECTION, query, AccountMarginModel.getMongoModelDescriptor(), AccountMarginModel::buildFromJson, resultHandler);
+        this.query(type, ACCOUNT_MARGIN_COLLECTION, query, AccountMarginModel.getMongoModelDescriptor(), AccountMarginModel.class, resultHandler);
     }
 
     @Override
     public void queryLiquiGroupMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupMarginModel>>> resultHandler) {
-        this.query(type, LIQUI_GROUP_MARGIN_COLLECTION, query, LiquiGroupMarginModel.getMongoModelDescriptor(), LiquiGroupMarginModel::buildFromJson, resultHandler);
+        this.query(type, LIQUI_GROUP_MARGIN_COLLECTION, query, LiquiGroupMarginModel.getMongoModelDescriptor(), LiquiGroupMarginModel.class, resultHandler);
     }
 
     @Override
     public void queryLiquiGroupSplitMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<LiquiGroupSplitMarginModel>>> resultHandler) {
-        this.query(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, LiquiGroupSplitMarginModel.getMongoModelDescriptor(), LiquiGroupSplitMarginModel::buildFromJson, resultHandler);
+        this.query(type, LIQUI_GROUP_SPLIT_MARGIN_COLLECTION, query, LiquiGroupSplitMarginModel.getMongoModelDescriptor(), LiquiGroupSplitMarginModel.class, resultHandler);
     }
 
     @Override
     public void queryPoolMargin(RequestType type, JsonObject query, Handler<AsyncResult<List<PoolMarginModel>>> resultHandler) {
-        this.query(type, POOL_MARGIN_COLLECTION, query, PoolMarginModel.getMongoModelDescriptor(), PoolMarginModel::buildFromJson, resultHandler);
+        this.query(type, POOL_MARGIN_COLLECTION, query, PoolMarginModel.getMongoModelDescriptor(), PoolMarginModel.class, resultHandler);
     }
 
     @Override
     public void queryPositionReport(RequestType type, JsonObject query, Handler<AsyncResult<List<PositionReportModel>>> resultHandler) {
-        this.query(type, POSITION_REPORT_COLLECTION, query, PositionReportModel.getMongoModelDescriptor(), PositionReportModel::buildFromJson, resultHandler);
+        this.query(type, POSITION_REPORT_COLLECTION, query, PositionReportModel.getMongoModelDescriptor(), PositionReportModel.class, resultHandler);
     }
 
     @Override
     public void queryRiskLimitUtilization(RequestType type, JsonObject query, Handler<AsyncResult<List<RiskLimitUtilizationModel>>> resultHandler) {
-        this.query(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, RiskLimitUtilizationModel.getMongoModelDescriptor(), RiskLimitUtilizationModel::buildFromJson, resultHandler);
+        this.query(type, RISK_LIMIT_UTILIZATION_COLLECTION, query, RiskLimitUtilizationModel.getMongoModelDescriptor(), RiskLimitUtilizationModel.class, resultHandler);
     }
 
-    private <T>
-    void query(RequestType type, String collection, JsonObject query, MongoModelDescriptor modelDescriptor, Function<JsonObject, T> modelFactory, Handler<AsyncResult<List<T>>> resultHandler) {
+    private <T extends Model>
+    void query(RequestType type, String collection, JsonObject query, MongoModelDescriptor modelDescriptor, Class<T> modelType, Handler<AsyncResult<List<T>>> resultHandler) {
         LOG.trace("Received {} {} query with message {}", type.name(), collection, query);
         JsonArray pipeline = getPipeline(type, query, modelDescriptor);
 
-        mongo.aggregate(collection, pipeline, res -> {
+        mongo.aggregate(collection, pipeline, modelType, res -> {
             if (res.succeeded()) {
-                List<T> result = res.result().stream()
-                        .map(modelFactory)
-                        .collect(Collectors.toList());
-                resultHandler.handle(Future.succeededFuture(result));
+                resultHandler.handle(Future.succeededFuture(res.result()));
             } else {
                 LOG.error("{} query failed", collection, res.cause());
                 connectionManager.startReconnection();
@@ -197,11 +193,11 @@ public class MongoPersistenceService implements PersistenceService {
         this.mongo.close();
     }
 
-    private void store(Collection<? extends Model> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
+    private void store(List<? extends Model> models, String collection, Handler<AsyncResult<Void>> resultHandler) {
         this.store(models, collection, RETRIES_IF_UPSERT_FAILED, resultHandler);
     }
 
-    private void store(Collection<? extends Model> models, String collection, int remainingRetries, Handler<AsyncResult<Void>> resultHandler) {
+    private void store(List<? extends Model> models, String collection, int remainingRetries, Handler<AsyncResult<Void>> resultHandler) {
         this.storeIntoCollection(models, collection).setHandler(ar -> {
             if (ar.succeeded()) {
                 resultHandler.handle(Future.succeededFuture());
@@ -230,30 +226,24 @@ public class MongoPersistenceService implements PersistenceService {
         return Collections.unmodifiableList(neededCollections);
     }
 
-    private Future<Void> storeIntoCollection(Collection<? extends Model> models, String collection) {
+    private Future<Void> storeIntoCollection(List<? extends Model> models, String collection) {
         List<Future> futureList = new ArrayList<>();
-        List<WriteModel<JsonObject>> bulkWrites = new ArrayList<>();
 
-        Runnable writeBulk = () -> {
-            Future<MongoClientUpdateResult> bulkFuture = Future.future();
-            this.mongo.bulkWrite(bulkWrites, collection, bulkFuture);
-            futureList.add(bulkFuture);
-            bulkWrites.clear();
-        };
-
-        models.forEach(model -> {
-            JsonObject queryParams = model.getMongoQueryParams();
-            JsonObject document = model.getMongoStoreDocument();
-            LOG.trace("Storing message into {} with body {}", collection, document.encodePrettily());
-
-            bulkWrites.add(MongoBulkClient.newWriteModel(queryParams, document, new UpdateOptions().setUpsert(true)));
-
-            if (bulkWrites.size() >= BULK_SIZE) {
-                writeBulk.run();
-            }
+        Lists.partition(models, MONGO_BULK_WRITE_SIZE).forEach(modelsBulk -> {
+            List<BulkOperation> bulkWrites = modelsBulk.stream()
+                    .peek(model -> {
+                        if (LOG.isTraceEnabled()) {
+                            LOG.trace("Storing message into {} with body {}", collection,
+                                    model.getMongoStoreDocument().encodePrettily());
+                        }
+                    })
+                    .map(model -> BulkOperation.createUpdate(model.getMongoQueryParams(), model.getMongoStoreDocument())
+                            .setUpsert(true))
+                    .collect(Collectors.toList());
+            Future<MongoClientBulkWriteResult> bulkResult = Future.future();
+            this.mongo.bulkWrite(collection, bulkWrites, bulkResult);
+            futureList.add(bulkResult);
         });
-
-        writeBulk.run();
 
         return CompositeFuture.all(futureList).map((Void) null);
     }

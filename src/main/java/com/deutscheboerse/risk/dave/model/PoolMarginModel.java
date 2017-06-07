@@ -74,7 +74,7 @@ public class PoolMarginModel implements Model<PoolMargin> {
         snapshotDocument.put("overUnderInClrRptCurr", this.grpc.getOverUnderInClrRptCurr());
         snapshotDocument.put("variPremInMarginCurr", this.grpc.getVariPremInMarginCurr());
         snapshotDocument.put("adjustedExchangeRate", this.grpc.getAdjustedExchangeRate());
-        document.put("$set", this.getMongoQueryParams());
+        document.put("$setOnInsert", this.getMongoQueryParams());
         document.put("$addToSet", new JsonObject().put("snapshots", snapshotDocument));
         return document;
     }

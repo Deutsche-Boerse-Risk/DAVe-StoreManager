@@ -235,6 +235,24 @@ public class MongoPersistenceServiceIT {
     }
 
     @Test
+    public void testAccountMarginStoreWithTracing(TestContext context) throws InterruptedException {
+        Appender<ILoggingEvent> stdout = rootLogger.getAppender("STDOUT");
+        rootLogger.detachAppender(stdout);
+        Level level = rootLogger.getLevel();
+        rootLogger.setLevel(Level.TRACE);
+        testAppender.start();
+        this.testStore(context,
+                DataHelper.ACCOUNT_MARGIN_FOLDER,
+                MongoPersistenceService.ACCOUNT_MARGIN_COLLECTION,
+                persistenceProxy::storeAccountMargin,
+                persistenceProxy::queryAccountMargin,
+                AccountMarginModel::buildFromJson);
+        testAppender.waitForMessageContains(Level.TRACE, "Storing message into AccountMargin with body");
+        rootLogger.setLevel(level);
+        rootLogger.addAppender(stdout);
+    }
+
+    @Test
     public void testDuplicateKeyWarning(TestContext context) throws InterruptedException {
         MongoDuplicateKeyErrorClient mongoClientMock = new MongoDuplicateKeyErrorClient();
         MongoPersistenceService persistenceService = new MongoPersistenceService(Vertx.vertx(), mongoClientMock);
@@ -244,11 +262,6 @@ public class MongoPersistenceServiceIT {
         persistenceService.storeAccountMargin(Collections.singletonList(model), context.asyncAssertFailure());
         testAppender.waitForMessageContains(Level.WARN, "Upsert failed - known Mongo issue, retrying ...");
         testAppender.stop();
-    }
-
-    @Test
-    public void testStoreEmptyCollection(TestContext context) {
-        persistenceProxy.storeAccountMargin(Collections.emptyList(), context.asyncAssertSuccess());
     }
 
     private interface StoreFunction<T extends Model> {
@@ -298,7 +311,7 @@ public class MongoPersistenceServiceIT {
 
     private static JsonObject getMongoDocumentFromModel(Model model) {
         JsonObject expectedResult = new JsonObject();
-        expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$set"));
+        expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$setOnInsert"));
         expectedResult.mergeIn(model.getMongoStoreDocument().getJsonObject("$addToSet").getJsonObject("snapshots"));
         return expectedResult;
     }

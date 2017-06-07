@@ -1,6 +1,6 @@
 package com.deutscheboerse.risk.dave.persistence;
 
-import com.mongodb.client.model.WriteModel;
+import com.deutscheboerse.risk.dave.model.Model;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -239,12 +239,17 @@ public class MongoErrorClient implements MongoBulkClient {
     }
 
     @Override
-    public MongoBulkClient bulkWrite(List<WriteModel<JsonObject>> writes, String collection, Handler<AsyncResult<MongoClientUpdateResult>> resultHandler) {
-        return this.process("bulkWrite", new MongoClientUpdateResult(), resultHandler);
+    public MongoClient bulkWrite(String collection, List<BulkOperation> operations, Handler<AsyncResult<MongoClientBulkWriteResult>> resultHandler) {
+        return this.process("bulkWrite", new MongoClientBulkWriteResult(), resultHandler);
     }
 
     @Override
-    public MongoBulkClient aggregate(String collection, JsonArray pipeline, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    public MongoClient bulkWriteWithOptions(String collection, List<BulkOperation> operations, BulkWriteOptions bulkWriteOptions, Handler<AsyncResult<MongoClientBulkWriteResult>> resultHandler) {
+        return this.process("bulkWriteWithOptions", new MongoClientBulkWriteResult(), resultHandler);
+    }
+
+    @Override
+    public <T extends Model> MongoBulkClient aggregate(String collection, JsonArray pipeline, Class<T> modelType, Handler<AsyncResult<List<T>>> resultHandler) {
         return this.process("aggregate", new ArrayList<>(), resultHandler);
     }
 
