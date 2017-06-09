@@ -1,7 +1,6 @@
 package io.vertx.ext.mongo.impl.config;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.impl.config.MongoBulkClientOptionsParser;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;

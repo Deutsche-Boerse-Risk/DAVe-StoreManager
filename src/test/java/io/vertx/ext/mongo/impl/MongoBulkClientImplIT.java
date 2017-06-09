@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
-public class MongoBulkClientImplTest {
+public class MongoBulkClientImplIT {
     @Test
     public void testAggregateFailure(TestContext context) {
         JsonObject config = TestConfig.getMongoConfig();
