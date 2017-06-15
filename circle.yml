@@ -21,4 +21,8 @@ deployment:
     commands:
       - ./docker/create_docker.sh
       - ./deployment/kube_deploy.sh
-      
+  demo:
+    branch: demo
+    commands:
+      - ./docker/create_docker.sh
+      - ./deployment/kube_deploy.sh
