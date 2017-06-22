@@ -98,6 +98,7 @@
                             <api.port>${api.port}</api.port>
                             <healthcheck.port>${healthcheck.port}</healthcheck.port>
                             <mongodb.port>${mongodb.port}</mongodb.port>
+                            <mongodb.host>${mongodb.host}</mongodb.host>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
                         </systemPropertyVariables>
@@ -237,7 +238,7 @@
                                     <file>${project.build.directory}/mongo.log</file>
                                 </log>
                                 <ports>
-                                    <port>mongodb.port:27017</port>
+                                    <port>+mongodb.host:mongodb.port:27017</port>
                                 </ports>
                             </run>
                         </image>

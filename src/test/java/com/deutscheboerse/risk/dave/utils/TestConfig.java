@@ -9,6 +9,7 @@ import io.vertx.core.net.SelfSignedCertificate;
 import java.util.UUID;
 
 public class TestConfig {
+    private static final String DB_HOST =  System.getProperty("mongodb.host", "localhost");
     private static final int DB_PORT =  Integer.getInteger("mongodb.port", 27017);
     public static final int API_PORT = Integer.getInteger("api.port", 8443);
     public static final int HEALTHCHECK_PORT = Integer.getInteger("healthcheck.port", 8080);
@@ -45,7 +46,7 @@ public class TestConfig {
         final String DB_NAME = "DAVe-Test" + UUID.randomUUID().getLeastSignificantBits();
         return new JsonObject()
                 .put("dbName", DB_NAME)
-                .put("connectionUrl", String.format("mongodb://localhost:%s/?waitqueuemultiple=%d", DB_PORT, 1000));
+                .put("connectionUrl", String.format("mongodb://%s:%s/?waitqueuemultiple=%d", DB_HOST, DB_PORT, 1000));
     }
 
     public static JsonObject getMongoClientConfig(JsonObject mongoVerticleConfig) {
