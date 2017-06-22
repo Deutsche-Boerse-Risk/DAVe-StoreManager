@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/DAVe-Store-Manager
+    docker:
+      -image: circleci/openjdk:8-jdk
+    environment:
+      _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
+    steps:
+      -checkout
+      -setup_remote_docker
+      -run:
+        command: mvn clean verify
