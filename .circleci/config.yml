@@ -15,4 +15,4 @@ jobs:
           # copying sources into this volume
           docker cp ~/DAVe-Store-Manager src:/DAVe-Store-Manager
           # starting application container using this volume
-          docker run --volumes-from src -w /DAVe-Store-Manager circleci/openjdk:8-jdk
+          docker run --volumes-from src -w /DAVe-Store-Manager circleci/openjdk:8-jdk mvn -B clean verify
