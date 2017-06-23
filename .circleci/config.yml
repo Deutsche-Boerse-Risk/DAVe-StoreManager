@@ -15,7 +15,7 @@ jobs:
           docker run -d -it --name dave --env-file /tmp/env.list -w /DAVe-StoreManager circleci/openjdk:8-jdk /bin/bash
           docker cp ~/DAVe-StoreManager/ dave:~/
           docker cp $DOCKER_CERT_PATH dave:/tmp
-          docker exec dave sh -c "chown -R circleci.circleci /$DOCKER_CERT_PATH"
+          docker exec dave sh -c "chown -R circleci.circleci $DOCKER_CERT_PATH"
           docker exec dave sh -c "chown -R circleci.circleci ~/DAVe-StoreManager"
           docker exec dave sh -c "cd ~/DAVe-StoreManager && mvn -B -Ddocker.network.mode=container clean verify"
 
