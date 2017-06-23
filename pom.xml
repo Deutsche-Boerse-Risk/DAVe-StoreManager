@@ -32,6 +32,8 @@
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <docker.network.mode>bridge</docker.network.mode>
     </properties>
 
     <repositories>
@@ -228,7 +230,7 @@
                             <name>mongo:3.4</name>
                             <run>
                                 <network>
-                                    <mode>container</mode>
+                                    <mode>${docker.network.mode}</mode>
                                     <name>dave</name>
                                 </network>
                                 <wait>
