@@ -221,13 +221,16 @@
                 <configuration>
                     <logDate>default</logDate>
                     <autoPull>true</autoPull>
-                    <skip>${skipTests}</skip>
                     <logStdout>false</logStdout>
                     <images>
                         <image>
                             <alias>db</alias>
                             <name>mongo:3.4</name>
                             <run>
+                                <network>
+                                    <mode>container</mode>
+                                    <name>dave</name>
+                                </network>
                                 <wait>
                                     <log>waiting for connections on port</log>
                                     <time>10000</time>
