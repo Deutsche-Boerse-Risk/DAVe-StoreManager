@@ -11,7 +11,7 @@ jobs:
       - setup_remote_docker
       - run: |
           # creating dummy container which will hold a volume with sources
-          docker create -v /DAVe-StoreManager --name src alpine:3.4 /bin/true
+          docker create -v /DAVe-StoreManager --name src circleci/openjdk:8 /bin/true
           # copying sources into this volume
           docker cp ~/DAVe-StoreManager src:/
           # starting application container using this volume
