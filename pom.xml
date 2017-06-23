@@ -49,6 +49,27 @@
         </repository>
     </repositories>
 
+    <profiles>
+        <profile>
+            <id>circle</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <docker.skip.default.images>true</docker.skip.default.images>
+            </properties>
+        </profile>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <docker.skip.circle.images>true</docker.skip.circle.images>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -229,10 +250,6 @@
                             <alias>db</alias>
                             <name>mongo:3.4</name>
                             <run>
-                                <network>
-                                    <mode>${docker.network.mode}</mode>
-                                    <name>dave</name>
-                                </network>
                                 <wait>
                                     <log>waiting for connections on port</log>
                                     <time>10000</time>
@@ -245,6 +262,27 @@
                                 <ports>
                                     <port>+mongodb.host:mongodb.port:27017</port>
                                 </ports>
+                                <skip>${docker.skip.default.images}</skip>
+                            </run>
+                        </image>
+                        <image>
+                            <alias>db-circle</alias>
+                            <name>mongo:3.4</name>
+                            <run>
+                                <network>
+                                    <mode>container</mode>
+                                    <name>dave</name>
+                                </network>
+                                <wait>
+                                    <log>waiting for connections on port</log>
+                                    <time>10000</time>
+                                </wait>
+                                <log>
+                                    <prefix>DB</prefix>
+                                    <color>yellow</color>
+                                    <file>${project.build.directory}/mongo.log</file>
+                                </log>
+                                <skip>${docker.skip.circle.images}</skip>
                             </run>
                         </image>
                     </images>
