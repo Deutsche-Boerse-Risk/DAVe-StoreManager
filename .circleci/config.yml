@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/DAVe-Store-Manager
+    working_directory: ~/DAVe-StoreManager
     docker:
       - image: circleci/openjdk:8-jdk
     environment:
@@ -11,8 +11,8 @@ jobs:
       - setup_remote_docker
       - run: |
           # creating dummy container which will hold a volume with sources
-          docker create -v /DAVe-Store-Manager --name src alpine:3.4 /bin/true
+          docker create -v /DAVe-StoreManager --name src alpine:3.4 /bin/true
           # copying sources into this volume
-          docker cp ~/DAVe-Store-Manager src:/
+          docker cp ~/DAVe-StoreManager src:/
           # starting application container using this volume
-          docker run --volumes-from src -w /DAVe-Store-Manager circleci/openjdk:8-jdk mvn -B clean verify
+          docker run --volumes-from src -w /DAVe-StoreManager circleci/openjdk:8-jdk mvn -B clean verify
