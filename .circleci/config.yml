@@ -18,12 +18,3 @@ jobs:
           docker exec dave sh -c "sudo chown -R circleci.circleci $DOCKER_CERT_PATH"
           docker exec dave sh -c "sudo chown -R circleci.circleci ~/DAVe-StoreManager"
           docker exec dave sh -c "cd ~/DAVe-StoreManager && mvn -B -P circle clean verify"
-
-#          # creating dummy container which will hold a volume with sources
-#          docker create -v /DAVe-StoreManager --name src circleci/openjdk:8 /bin/true
-#          # copying sources into this volume
-#          docker cp ~/DAVe-StoreManager src:/
-#          # copying docker certs into this volume
-#          docker cp $DOCKER_CERT_PATH src:/tmp
-#          # starting application container using this volume
-#          docker run --env-file /tmp/env.list --volumes-from src -w /DAVe-StoreManager circleci/openjdk:8-jdk sh -c "cp -R . ~/DAVe-StoreManager && cd ~/DAVe-StoreManager && mvn -B clean verify"

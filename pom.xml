@@ -32,8 +32,6 @@
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <docker.network.mode>bridge</docker.network.mode>
     </properties>
 
     <repositories>
@@ -57,6 +55,8 @@
             </activation>
             <properties>
                 <docker.skip.default.images>true</docker.skip.default.images>
+                <mongodb.host>localhost</mongodb.host>
+                <mongodb.port>27017</mongodb.port>
             </properties>
         </profile>
         <profile>
