@@ -12,7 +12,7 @@ jobs:
       - run: |
           # store our env variables
           set | grep ^DOCKER > /tmp/env.list
-          docker run -d -it --name dave --env-file /tmp/env.list --volumes-from src -w /DAVe-StoreManager circleci/openjdk:8-jdk /bin/bash
+          docker run -d -it --name dave --env-file /tmp/env.list -w /DAVe-StoreManager circleci/openjdk:8-jdk /bin/bash
           docker cp ~/DAVe-StoreManager/ dave:~/
           docker cp $DOCKER_CERT_PATH dave:/tmp
           docker exec dave sh -c "chown -R circleci.circleci /tmp/$DOCKER_CERT_PATH"
