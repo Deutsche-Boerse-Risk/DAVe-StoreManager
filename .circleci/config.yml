@@ -9,5 +9,10 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          command: mvn clean verify
+      - run: |
+          # creating dummy container which will hold a volume with sources
+          docker create -v /DAVe-Store-Manager --name src alpine:3.4 /bin/true
+          # copying sources into this volume
+          docker cp ~/DAVe-Store-Manager src:/DAVe-Store-Manager
+          # starting application container using this volume
+          docker run --volumes-from src -w /DAVe-Store-Manager circleci/openjdk:8-jdk
