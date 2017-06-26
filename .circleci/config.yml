@@ -1,24 +1,60 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/DAVe-StoreManager
+    environment:
+      - _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
+      - TEST_RESULTS_DIR: ~/${CIRCLE_PROJECT_REPONAME}/target/junit/
+      - DOCKER_LOGS_DIR: ~/${CIRCLE_PROJECT_REPONAME}/target/docker
+
+    working_directory: ~/${CIRCLE_PROJECT_REPONAME}
+
     docker:
       - image: circleci/openjdk:8-jdk
-    environment:
-      _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
+
     steps:
       - checkout
       - setup_remote_docker
       - run:
-          environment:
-            PROJECT_NAME: DAVe-StoreManager
+          name: Start 'build' container
           command: |
             # store our env variables
             set | grep ^DOCKER > /tmp/env.list
             docker run -d -it --name dave --env-file /tmp/env.list circleci/openjdk:8-jdk /bin/bash
-            docker cp ~/${PROJECT_NAME} dave:/home/circleci
+      - run:
+          name: Copy sources and certs into the 'build' container
+          command: |
+            docker cp ~/${CIRCLE_PROJECT_REPONAME} dave:/home/circleci
             docker cp $DOCKER_CERT_PATH dave:/tmp
             docker exec dave sh -c "sudo chown -R circleci.circleci $DOCKER_CERT_PATH"
-            docker exec dave sh -c "sudo chown -R circleci.circleci ~/${PROJECT_NAME}"
-            docker exec dave sh -c "cd ~/${PROJECT_NAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -B clean verify sonar:sonar"
-            docker cp dave:/home/circleci/${PROJECT_NAME}/target ~/${PROJECT_NAME}
+            docker exec dave sh -c "sudo chown -R circleci.circleci ~/${CIRCLE_PROJECT_REPONAME}"
+      - run:
+          name: Execute tests & build
+          command: docker exec dave sh -c "cd ~/${CIRCLE_PROJECT_REPONAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -B clean verify sonar:sonar"
+
+      - run:
+          name: Copy build and test results
+          command: docker cp dave:/home/circleci/${CIRCLE_PROJECT_REPONAME}/target ~/${CIRCLE_PROJECT_REPONAME}
+
+      - run:
+          name: Extract test results
+          command: |
+            mkdir -p ${TEST_RESULTS_DIR}
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ${TEST_RESULTS_DIR} \;
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ${TEST_RESULTS_DIR} \;
+
+      - run:
+          name: Extract docker daemon logs
+          command: |
+            mkdir -p ${DOCKER_LOGS_DIR}
+            cp ${CIRCLE_PROJECT_REPONAME}/target/*.log ${DOCKER_LOGS_DIR}
+
+      - test-results-store:
+          path: ${TEST_RESULTS_DIR}
+
+      - store_artifacts:
+          path: ${DOCKER_LOGS_DIR}
+          destination: docker-logs
+
+      - store_artifacts:
+          path: ${TEST_RESULTS_DIR}
+          destination: tests
