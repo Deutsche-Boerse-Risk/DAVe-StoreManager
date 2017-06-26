@@ -47,29 +47,6 @@
         </repository>
     </repositories>
 
-    <profiles>
-        <profile>
-            <id>circle</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <docker.skip.default.images>true</docker.skip.default.images>
-                <mongodb.host>localhost</mongodb.host>
-                <mongodb.port>27017</mongodb.port>
-            </properties>
-        </profile>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <docker.skip.circle.images>true</docker.skip.circle.images>
-            </properties>
-        </profile>
-    </profiles>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -120,8 +97,8 @@
                         <systemPropertyVariables>
                             <api.port>${api.port}</api.port>
                             <healthcheck.port>${healthcheck.port}</healthcheck.port>
-                            <mongodb.port>${mongodb.port}</mongodb.port>
-                            <mongodb.host>${mongodb.host}</mongodb.host>
+                            <mongodb.host>${docker.container.mongo.ip}</mongodb.host>
+                            <mongodb.port>27017</mongodb.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
                         </systemPropertyVariables>
@@ -247,7 +224,7 @@
                     <logStdout>false</logStdout>
                     <images>
                         <image>
-                            <alias>db</alias>
+                            <alias>mongo</alias>
                             <name>mongo:3.4</name>
                             <run>
                                 <wait>
@@ -259,30 +236,6 @@
                                     <color>yellow</color>
                                     <file>${project.build.directory}/mongo.log</file>
                                 </log>
-                                <ports>
-                                    <port>+mongodb.host:mongodb.port:27017</port>
-                                </ports>
-                                <skip>${docker.skip.default.images}</skip>
-                            </run>
-                        </image>
-                        <image>
-                            <alias>db-circle</alias>
-                            <name>mongo:3.4</name>
-                            <run>
-                                <network>
-                                    <mode>container</mode>
-                                    <name>dave</name>
-                                </network>
-                                <wait>
-                                    <log>waiting for connections on port</log>
-                                    <time>10000</time>
-                                </wait>
-                                <log>
-                                    <prefix>DB</prefix>
-                                    <color>yellow</color>
-                                    <file>${project.build.directory}/mongo.log</file>
-                                </log>
-                                <skip>${docker.skip.circle.images}</skip>
                             </run>
                         </image>
                     </images>

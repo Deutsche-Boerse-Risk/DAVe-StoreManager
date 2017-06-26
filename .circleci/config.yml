@@ -9,12 +9,16 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: |
-          # store our env variables
-          set | grep ^DOCKER > /tmp/env.list
-          docker run -d -it --name dave --env-file /tmp/env.list -w /DAVe-StoreManager circleci/openjdk:8-jdk /bin/bash
-          docker cp ~/DAVe-StoreManager dave:/home/circleci
-          docker cp $DOCKER_CERT_PATH dave:/tmp
-          docker exec dave sh -c "sudo chown -R circleci.circleci $DOCKER_CERT_PATH"
-          docker exec dave sh -c "sudo chown -R circleci.circleci ~/DAVe-StoreManager"
-          docker exec dave sh -c "cd ~/DAVe-StoreManager && mvn -B -P circle clean verify"
+      - run:
+          environment:
+            PROJECT_NAME: DAVe-StoreManager
+          command: |
+            # store our env variables
+            set | grep ^DOCKER > /tmp/env.list
+            docker run -d -it --name dave --env-file /tmp/env.list circleci/openjdk:8-jdk /bin/bash
+            docker cp ~/${PROJECT_NAME} dave:/home/circleci
+            docker cp $DOCKER_CERT_PATH dave:/tmp
+            docker exec dave sh -c "sudo chown -R circleci.circleci $DOCKER_CERT_PATH"
+            docker exec dave sh -c "sudo chown -R circleci.circleci ~/${PROJECT_NAME}"
+            docker exec dave sh -c "cd ~/${PROJECT_NAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -B clean verify sonar:sonar"
+            docker cp dave:/home/circleci/${PROJECT_NAME}/target ~/${PROJECT_NAME}
