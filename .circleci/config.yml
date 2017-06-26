@@ -46,7 +46,7 @@ jobs:
           name: Extract docker daemon logs
           command: |
             mkdir -p ${DOCKER_LOGS_DIR}
-            cp ${CIRCLE_PROJECT_REPONAME}/target/*.log ${DOCKER_LOGS_DIR}
+            cp ~/${CIRCLE_PROJECT_REPONAME}/target/*.log ${DOCKER_LOGS_DIR}
 
       - test-results-store:
           path: ${TEST_RESULTS_DIR}
