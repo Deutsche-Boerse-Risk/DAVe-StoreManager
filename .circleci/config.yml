@@ -3,8 +3,8 @@ jobs:
   build:
     environment:
       - _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
-      - TEST_RESULTS_DIR: ~/${CIRCLE_PROJECT_REPONAME}/target/junit/
-      - DOCKER_LOGS_DIR: ~/${CIRCLE_PROJECT_REPONAME}/target/docker
+      - TEST_RESULTS_DIR: target/junit/
+      - DOCKER_LOGS_DIR: target/docker
 
     working_directory: ~/${CIRCLE_PROJECT_REPONAME}
 
