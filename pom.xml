@@ -97,7 +97,8 @@
                         <systemPropertyVariables>
                             <api.port>${api.port}</api.port>
                             <healthcheck.port>${healthcheck.port}</healthcheck.port>
-                            <mongodb.port>${mongodb.port}</mongodb.port>
+                            <mongodb.host>${docker.container.mongo.ip}</mongodb.host>
+                            <mongodb.port>27017</mongodb.port>
                             <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
                             <logback.configurationFile>${project.basedir}/src/test/resources/logback.xml</logback.configurationFile>
                         </systemPropertyVariables>
@@ -220,11 +221,10 @@
                 <configuration>
                     <logDate>default</logDate>
                     <autoPull>true</autoPull>
-                    <skip>${skipTests}</skip>
                     <logStdout>false</logStdout>
                     <images>
                         <image>
-                            <alias>db</alias>
+                            <alias>mongo</alias>
                             <name>mongo:3.4</name>
                             <run>
                                 <wait>
@@ -236,9 +236,6 @@
                                     <color>yellow</color>
                                     <file>${project.build.directory}/mongo.log</file>
                                 </log>
-                                <ports>
-                                    <port>mongodb.port:27017</port>
-                                </ports>
                             </run>
                         </image>
                     </images>

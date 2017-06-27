@@ -1,0 +1,58 @@
+version: 2
+jobs:
+  build:
+    environment:
+      - _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
+
+    working_directory: ~/DAVe-StoreManager
+
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Start 'build' container
+          command: |
+            # store our env variables
+            set | grep ^DOCKER > /tmp/env.list
+            docker run -d -it --name dave --env-file /tmp/env.list circleci/openjdk:8-jdk /bin/bash
+      - run:
+          name: Copy sources and certs into the 'build' container
+          command: |
+            docker cp ~/${CIRCLE_PROJECT_REPONAME} dave:/home/circleci
+            docker cp $DOCKER_CERT_PATH dave:/tmp
+            docker exec dave sh -c "sudo chown -R circleci.circleci $DOCKER_CERT_PATH"
+            docker exec dave sh -c "sudo chown -R circleci.circleci ~/${CIRCLE_PROJECT_REPONAME}"
+      - run:
+          name: Execute tests & build
+          command: docker exec dave sh -c "cd ~/${CIRCLE_PROJECT_REPONAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -DrepoToken=$COVERALLS_TOKEN -B clean verify sonar:sonar coveralls:report"
+
+      - run:
+          name: Copy build and test results
+          command: docker cp dave:/home/circleci/${CIRCLE_PROJECT_REPONAME}/target ~/${CIRCLE_PROJECT_REPONAME}
+
+      - run:
+          name: Extract test results
+          command: |
+            mkdir -p target/junit
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} target/junit \;
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} target/junit \;
+
+      - run:
+          name: Extract docker daemon logs
+          command: |
+            mkdir -p target/docker
+            cp ~/${CIRCLE_PROJECT_REPONAME}/target/*.log target/docker
+
+      - test-results-store:
+          path: target/junit
+
+      - store_artifacts:
+          path: target/docker
+          destination: docker-logs
+
+      - store_artifacts:
+          path: target/junit
+          destination: tests
