@@ -27,7 +27,7 @@ jobs:
             docker exec dave sh -c "sudo chown -R circleci.circleci ~/${CIRCLE_PROJECT_REPONAME}"
       - run:
           name: Execute tests & build
-          command: docker exec dave sh -c "cd ~/${CIRCLE_PROJECT_REPONAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -B clean verify sonar:sonar"
+          command: docker exec dave sh -c "cd ~/${CIRCLE_PROJECT_REPONAME} && mvn -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONARQUBE_TOKEN -Dsonar.organization=$SONARQUBE_ORG -DrepoToken=$COVERALLS_TOKEN -B clean verify sonar:sonar coveralls:report"
 
       - run:
           name: Copy build and test results
