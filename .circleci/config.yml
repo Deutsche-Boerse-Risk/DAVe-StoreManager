@@ -4,7 +4,7 @@ jobs:
     environment:
       - _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
 
-    working_directory: ~/${CIRCLE_PROJECT_REPONAME}
+    working_directory: ~/DAVe-StoreManager
 
     docker:
       - image: circleci/openjdk:8-jdk
