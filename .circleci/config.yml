@@ -56,3 +56,11 @@ jobs:
       - store_artifacts:
           path: target/junit
           destination: tests
+
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              ./docker/create_docker.sh
+              ./deployment/kube_deploy.sh
+            fi
+
