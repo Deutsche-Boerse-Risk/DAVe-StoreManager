@@ -37,8 +37,8 @@ jobs:
           name: Extract test results
           command: |
             mkdir -p target/junit
-            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} target/junit \;
-            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} target/junit \;
+            find . -type f -regex "target/surefire-reports/.*xml" -exec cp {} target/junit \;
+            find . -type f -regex "target/failsafe-reports/.*xml" -exec cp {} target/junit \;
 
       - run:
           name: Extract docker daemon logs
