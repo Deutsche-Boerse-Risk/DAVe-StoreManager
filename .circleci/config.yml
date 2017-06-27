@@ -3,8 +3,6 @@ jobs:
   build:
     environment:
       - _JAVA_OPTIONS: "-Xms512m -Xmx2048m"
-      - TEST_RESULTS_DIR: target/junit/
-      - DOCKER_LOGS_DIR: target/docker
 
     working_directory: ~/${CIRCLE_PROJECT_REPONAME}
 
@@ -38,23 +36,23 @@ jobs:
       - run:
           name: Extract test results
           command: |
-            mkdir -p ${TEST_RESULTS_DIR}
-            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ${TEST_RESULTS_DIR} \;
-            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ${TEST_RESULTS_DIR} \;
+            mkdir -p target/junit
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} target/junit \;
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} target/junit \;
 
       - run:
           name: Extract docker daemon logs
           command: |
-            mkdir -p ${DOCKER_LOGS_DIR}
-            cp ~/${CIRCLE_PROJECT_REPONAME}/target/*.log ${DOCKER_LOGS_DIR}
+            mkdir -p target/docker
+            cp ~/${CIRCLE_PROJECT_REPONAME}/target/*.log target/docker
 
       - test-results-store:
-          path: ${TEST_RESULTS_DIR}
+          path: target/junit
 
       - store_artifacts:
-          path: ${DOCKER_LOGS_DIR}
+          path: target/docker
           destination: docker-logs
 
       - store_artifacts:
-          path: ${TEST_RESULTS_DIR}
+          path: target/junit
           destination: tests
